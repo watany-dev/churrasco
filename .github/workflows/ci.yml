@@ -1,0 +1,174 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Biome (lint + format + organize-imports)
+        run: pnpm exec biome ci .
+
+      - name: Type-check
+        run: pnpm check-types
+
+      - name: Knip (unused files / exports / deps)
+        run: pnpm exec knip --reporter compact --no-progress
+
+      - name: Unit tests with coverage
+        run: pnpm exec vitest run --coverage
+
+      - name: Audit (production deps, high+ severity)
+        run: pnpm audit --prod --audit-level=high
+        continue-on-error: false
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+          retention-days: 14
+          if-no-files-found: ignore
+
+  vscode-test:
+    name: vscode-test (${{ matrix.os }})
+    needs: quality
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Skip if no integration tests yet
+        id: gate
+        shell: bash
+        run: |
+          if compgen -G "src/test/**/*.test.ts" > /dev/null; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No src/test/**/*.test.ts found — skipping vscode-test."
+          fi
+
+      - name: Setup pnpm
+        if: steps.gate.outputs.run == 'true'
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.gate.outputs.run == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile
+        if: steps.gate.outputs.run == 'true'
+        run: pnpm compile
+
+      - name: Run VS Code tests (Linux)
+        if: steps.gate.outputs.run == 'true' && runner.os == 'Linux'
+        run: xvfb-run -a pnpm test:vscode
+
+      - name: Run VS Code tests (macOS / Windows)
+        if: steps.gate.outputs.run == 'true' && runner.os != 'Linux'
+        run: pnpm test:vscode
+
+  package:
+    name: package (vsix)
+    needs: [quality, vscode-test]
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Skip if no extension entrypoint yet
+        id: gate
+        shell: bash
+        run: |
+          if [ -f src/extension.ts ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::src/extension.ts not present — skipping package."
+          fi
+
+      - name: Setup pnpm
+        if: steps.gate.outputs.run == 'true'
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.gate.outputs.run == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build VSIX
+        if: steps.gate.outputs.run == 'true'
+        run: pnpm package
+
+      - name: Upload VSIX
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: churrasco-break-vsix
+          path: '*.vsix'
+          retention-days: 30
+          if-no-files-found: ignore
+
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run actionlint
+        uses: raven-actions/actionlint@v2
+        with:
+          flags: '-color'
