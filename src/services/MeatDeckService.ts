@@ -27,13 +27,18 @@ export function drawNext(
   allMeats: Meat[],
   rng: () => number = Math.random,
 ): { meat: Meat; state: MeatDeckState } {
-  const deck =
-    state.deck.length > 0
-      ? [...state.deck]
-      : shuffle(
-          allMeats.map((m) => m.id),
-          rng,
-        );
+  let deck: string[];
+  if (state.deck.length > 0) {
+    deck = [...state.deck];
+  } else {
+    deck = shuffle(
+      allMeats.map((m) => m.id),
+      rng,
+    );
+    if (deck[0] === state.lastServedMeatId && deck.length >= 2) {
+      [deck[0], deck[1]] = [deck[1] as string, deck[0] as string];
+    }
+  }
   const nextId = deck.shift() as string;
   const meat = allMeats.find((m) => m.id === nextId) as Meat;
   return {
