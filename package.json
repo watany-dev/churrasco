@@ -33,7 +33,7 @@
     "onlyBuiltDependencies": ["@biomejs/biome", "@vscode/vsce-sign", "esbuild", "keytar"]
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.4.13",
     "@commitlint/cli": "^19.6.1",
     "@commitlint/config-conventional": "^19.6.0",
     "@commitlint/types": "^19.5.0",
