@@ -2,6 +2,8 @@
 
 This document captures the v0.1 `package.json` blueprint. It is the concrete contribution surface — commands, configuration, and views — that the spec maps to. Cross-references: [State & Commands](spec/state-and-commands.md), [Architecture](spec/architecture.md).
 
+The toolchain is pinned via `packageManager: "pnpm@<version>"` (activated by Corepack), `engines.node: ">=24"`, and `engines.vscode: "^1.90.0"`. All scripts assume `pnpm`. Quality and tests are run via Biome / Vitest / `@vscode/test-cli` rather than ESLint / Prettier / Mocha-as-unit-runner.
+
 ```json
 {
   "name": "churrasco-break",
@@ -10,8 +12,10 @@ This document captures the v0.1 `package.json` blueprint. It is the concrete con
   "version": "0.1.0",
   "publisher": "your-publisher-name",
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.90.0",
+    "node": ">=24"
   },
+  "packageManager": "pnpm@<version>",
   "categories": ["Other"],
   "activationEvents": [],
   "main": "./dist/extension.js",
@@ -88,15 +92,20 @@ This document captures the v0.1 `package.json` blueprint. It is the concrete con
     }
   },
   "scripts": {
-    "compile": "npm run check-types && node esbuild.js",
-    "check-types": "tsc --noEmit",
-    "watch": "npm-run-all -p watch:*",
-    "watch:esbuild": "node esbuild.js --watch",
-    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "lint": "eslint src --ext ts",
-    "test": "vscode-test",
-    "package": "npm run check-types && node esbuild.js --production",
-    "vscode:prepublish": "npm run package"
+    "compile":      "pnpm check-types && node esbuild.js",
+    "check-types":  "tsc --noEmit",
+    "watch":        "pnpm /^watch:/",
+    "watch:esbuild":"node esbuild.js --watch",
+    "watch:tsc":    "tsc --noEmit --watch --project tsconfig.json",
+    "lint":         "biome check .",
+    "lint:fix":     "biome check --write .",
+    "format":       "biome format --write .",
+    "knip":         "knip",
+    "test:unit":    "vitest run",
+    "test:vscode":  "vscode-test",
+    "test":         "pnpm test:unit && pnpm test:vscode",
+    "package":      "pnpm check-types && node esbuild.js --production && vsce package --no-dependencies",
+    "vscode:prepublish": "pnpm package"
   }
 }
 ```

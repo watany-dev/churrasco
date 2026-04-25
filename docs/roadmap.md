@@ -10,11 +10,9 @@ Goal:
 
 Tasks:
 
-- Create a TypeScript-based VS Code extension project.
-- Fill in basic `package.json` metadata.
+- Create a TypeScript-based VS Code extension project on top of the existing toolchain skeleton (`package.json`, `pnpm-lock.yaml`, `biome.json`, `tsconfig.json`, `vitest.config.ts`, `.vscode-test.mjs`, `knip.config.ts`, `esbuild.js`).
+- Fill in `package.json` `contributes` (commands, views, configuration) per [packaging.md](../packaging.md).
 - Create `extension.ts`.
-- Configure ESLint, Prettier, and the TypeScript compiler.
-- Configure esbuild.
 - Register a "hello world"-equivalent command.
 
 Deliverables:
@@ -24,8 +22,9 @@ Deliverables:
 
 Done when:
 
-- `npm run compile` passes.
+- `pnpm compile` passes.
 - A dummy command runs in VS Code.
+- The CI workflow stays green on the resulting branch.
 
 ### Milestone 1 — Meat data and draw
 
@@ -211,10 +210,12 @@ Deliverables:
 
 Done when:
 
-- `npm run compile` passes.
-- `npm run lint` passes.
-- `npm run test` passes.
-- `vsce package` succeeds.
+- `pnpm compile` passes.
+- `pnpm lint` passes.
+- `pnpm knip` passes.
+- `pnpm test:unit` and `pnpm test:vscode` both pass.
+- `pnpm package` produces a VSIX.
+- The CI `ci` workflow is green on `main`.
 - The VSIX installs and runs in another VS Code environment.
 
 ## v0.2 and beyond candidates
