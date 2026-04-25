@@ -3,19 +3,13 @@
   "language": "japanese",
   "autoMemoryEnabled": false,
   "permissions": {
-    "allow": [
-      "Bash(pnpm:*)",
-      "Bash(node:*)",
-      "Bash(git:*)"
-    ]
+    "allow": ["Bash(pnpm:*)", "Bash(node:*)", "Bash(git:*)"]
   },
   "hooks": {
     "Stop": [
       {
         "matcher": "",
-        "hooks": [
-          { "type": "command", "command": "pnpm ci" }
-        ]
+        "hooks": [{ "type": "command", "command": "pnpm ci" }]
       }
     ]
   }

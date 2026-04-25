@@ -10,6 +10,7 @@ const config: KnipConfig = {
     'mocha',
     '@vscode/test-electron',
     '@commitlint/cli',
+    'lefthook',
   ],
   ignoreBinaries: ['xvfb-run'],
   vitest: {
