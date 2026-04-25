@@ -6,6 +6,10 @@
   "private": true,
   "license": "MIT",
   "publisher": "watany-dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/watany-dev/churrasco.git"
+  },
   "engines": {
     "vscode": "^1.90.0",
     "node": ">=24"
@@ -26,8 +30,8 @@
     "test:unit": "vitest run",
     "test:vscode": "vscode-test",
     "test": "pnpm test:unit && pnpm test:vscode",
-    "package": "pnpm check-types && node esbuild.js --production && vsce package --no-dependencies",
-    "vscode:prepublish": "pnpm package",
+    "package": "vsce package --no-dependencies",
+    "vscode:prepublish": "pnpm check-types && node esbuild.js --production",
     "ci": "pnpm exec biome ci . && pnpm check-types && pnpm exec knip --reporter compact --no-progress && pnpm exec vitest run --coverage && pnpm audit --prod --audit-level=high",
     "prepare": "lefthook install"
   },
