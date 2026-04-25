@@ -1,0 +1,53 @@
+{
+  "name": "churrasco-break",
+  "displayName": "Churrasco Break",
+  "description": "A VS Code extension that delivers a different cut of churrasco to your editor every 10 minutes.",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "publisher": "watany-dev",
+  "engines": {
+    "vscode": "^1.90.0",
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@10.33.2",
+  "categories": ["Other"],
+  "scripts": {
+    "compile": "pnpm check-types && node esbuild.js",
+    "check-types": "tsc --noEmit",
+    "watch": "pnpm /^watch:/",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "knip": "knip",
+    "test:unit": "vitest run",
+    "test:vscode": "vscode-test",
+    "test": "pnpm test:unit && pnpm test:vscode",
+    "package": "pnpm check-types && node esbuild.js --production && vsce package --no-dependencies",
+    "vscode:prepublish": "pnpm package"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@biomejs/biome", "@vscode/vsce-sign", "esbuild", "keytar"]
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@commitlint/types": "^19.5.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.10.7",
+    "@types/vscode": "^1.90.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.2.2",
+    "esbuild": "^0.24.2",
+    "knip": "^5.41.1",
+    "mocha": "^11.0.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}
