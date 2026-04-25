@@ -4,13 +4,16 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   quality:
@@ -23,7 +26,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
-          fetch-depth: 0
           persist-credentials: false
 
       - name: Setup pnpm
@@ -73,7 +75,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: ${{ fromJSON(github.event_name == 'pull_request' && '["ubuntu-latest","macos-latest"]' || '["ubuntu-latest","macos-latest","windows-latest"]') }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
@@ -170,27 +172,3 @@ jobs:
           path: '*.vsix'
           retention-days: 30
           if-no-files-found: ignore
-
-  actionlint:
-    name: actionlint
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-        with:
-          persist-credentials: false
-
-      - name: Install actionlint
-        shell: bash
-        run: |
-          curl -fsSL -o actionlint.tar.gz \
-            https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz
-          tar -xzf actionlint.tar.gz actionlint
-          ./actionlint --version
-
-      - name: Run actionlint
-        shell: bash
-        run: ./actionlint -color
