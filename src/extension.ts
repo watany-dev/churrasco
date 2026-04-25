@@ -1,9 +1,12 @@
-import type { ExtensionContext } from 'vscode';
+import { type ExtensionContext, commands, window } from 'vscode';
+import { COMMAND_IDS } from './constants/commands';
 
-export function activate(_context: ExtensionContext): void {
-  // Milestone 0 will wire up the real services here.
+export function activate(context: ExtensionContext): void {
+  context.subscriptions.push(
+    commands.registerCommand(COMMAND_IDS.startSession, () => {
+      window.showInformationMessage('Churrasco started (stub)');
+    }),
+  );
 }
 
-export function deactivate(): void {
-  // Milestone 0 will dispose timers and disposables here.
-}
+export function deactivate(): void {}
