@@ -41,7 +41,9 @@ Packaging:
   @vscode/vsce
 
 CI / Automation:
-  GitHub Actions (ci.yml, commitlint.yml)
+  GitHub Actions (ci.yml, commitlint.yml, security-scan.yml, codeql.yml)
+  actionlint + zizmor (workflow static analysis, security-scan.yml)
+  CodeQL (JavaScript/TypeScript SAST, codeql.yml)
   Dependabot (npm, github-actions)
 
 State storage:
