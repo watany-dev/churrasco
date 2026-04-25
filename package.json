@@ -27,7 +27,9 @@
     "test:vscode": "vscode-test",
     "test": "pnpm test:unit && pnpm test:vscode",
     "package": "pnpm check-types && node esbuild.js --production && vsce package --no-dependencies",
-    "vscode:prepublish": "pnpm package"
+    "vscode:prepublish": "pnpm package",
+    "ci": "pnpm exec biome ci . && pnpm check-types && pnpm exec knip --reporter compact --no-progress && pnpm exec vitest run --coverage && pnpm audit --prod --audit-level=high",
+    "prepare": "lefthook install"
   },
   "pnpm": {
     "onlyBuiltDependencies": ["@biomejs/biome", "@vscode/vsce-sign", "esbuild", "keytar"]
@@ -46,6 +48,7 @@
     "@vscode/vsce": "^3.2.2",
     "esbuild": "^0.24.2",
     "knip": "^5.41.1",
+    "lefthook": "^1.10.0",
     "mocha": "^11.0.2",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8"
