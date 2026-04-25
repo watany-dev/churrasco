@@ -16,6 +16,7 @@
   },
   "packageManager": "pnpm@10.33.2",
   "categories": ["Other"],
+  "main": "./dist/extension.js",
   "scripts": {
     "compile": "pnpm check-types && node esbuild.js",
     "check-types": "tsc --noEmit",
