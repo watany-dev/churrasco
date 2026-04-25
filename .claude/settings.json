@@ -1,0 +1,11 @@
+{
+  "effortLevel": "high",
+  "language": "japanese",
+  "autoMemoryEnabled": false,
+  "permissions": {
+    "allow": [
+      "Bash(npm:*)",
+      "Bash(git:*)"
+    ]
+  }
+}
