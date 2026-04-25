@@ -6,6 +6,10 @@
   "private": true,
   "license": "MIT",
   "publisher": "watany-dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/watany-dev/churrasco.git"
+  },
   "engines": {
     "vscode": "^1.90.0",
     "node": ">=24"
