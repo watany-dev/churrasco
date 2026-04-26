@@ -2,16 +2,19 @@ import * as assert from 'node:assert';
 import * as vscode from 'vscode';
 
 suite('Extension activation', () => {
-  test('registers churrasco.startSession command', async () => {
+  test('registers churrasco session commands', async () => {
     const extension = vscode.extensions.getExtension('watany-dev.churrasco-break');
     assert.ok(extension, 'extension watany-dev.churrasco-break is not present');
 
     await extension.activate();
 
     const allCommands = await vscode.commands.getCommands(true);
-    assert.ok(
-      allCommands.includes('churrasco.startSession'),
-      'churrasco.startSession is not registered',
-    );
+    for (const id of [
+      'churrasco.startSession',
+      'churrasco.stopSession',
+      'churrasco.pauseSession',
+    ]) {
+      assert.ok(allCommands.includes(id), `${id} is not registered`);
+    }
   });
 });

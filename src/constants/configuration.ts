@@ -1,3 +1,9 @@
+export const CONFIGURATION_SECTION = 'churrasco';
+
+export const CONFIGURATION_KEYS = {
+  intervalMinutes: 'intervalMinutes',
+} as const;
+
 export const DEFAULT_INTERVAL_MINUTES = 10;
 
 export function sanitizeInterval(value: unknown): number {

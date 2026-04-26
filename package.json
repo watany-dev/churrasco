@@ -23,6 +23,14 @@
       {
         "command": "churrasco.startSession",
         "title": "Churrasco: Start Service"
+      },
+      {
+        "command": "churrasco.stopSession",
+        "title": "Churrasco: End Service"
+      },
+      {
+        "command": "churrasco.pauseSession",
+        "title": "Churrasco: Pause"
       }
     ],
     "configuration": {
