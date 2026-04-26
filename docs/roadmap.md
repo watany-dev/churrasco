@@ -2,6 +2,19 @@
 
 ## v0.1 milestones
 
+### Status
+
+| Milestone | Status |
+|-----------|--------|
+| M0 — Project bootstrap | ✅ Done |
+| M1 — Meat data and draw | ✅ Done |
+| M2 — Session and timer | ✅ Done |
+| M3 — Status bar and Quick Pick | ⏳ Planned |
+| M4 — Notifications and meat actions | ⏳ Planned |
+| M5 — Log, satiety, persistence | ⏳ Planned |
+| M6 — Simple sidebar | ⏳ Planned |
+| M7 — Tests and packaging | ⏳ Planned |
+
 ### Milestone 0 — Project bootstrap
 
 Goal:

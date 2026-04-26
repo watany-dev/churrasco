@@ -70,7 +70,7 @@ We bundle to keep activation and distribution lightweight. esbuild is small to c
 
 #### Vitest + `@vscode/test-cli`
 
-Pure logic — the meat draw, satiety calculation, log aggregation — is covered by **Vitest**. It is TS/ESM-native, ships with mocking and coverage out of the box, and makes the iteration cycle (`vitest`) fast enough to run while editing. Anything that needs a live Extension Host (command registration, `globalState` round-trips) is covered by `@vscode/test-cli` + `@vscode/test-electron` only. The two suites live side-by-side: `src/**/*.test.ts` for Vitest, `src/test/**/*.test.ts` for `@vscode/test-cli`.
+Pure logic — the meat draw, satiety calculation, log aggregation — is covered by **Vitest**. It is TS/ESM-native, ships with mocking and coverage out of the box, and makes the iteration cycle (`vitest`) fast enough to run while editing. Anything that needs a live Extension Host (command registration, `globalState` round-trips) is covered by `@vscode/test-cli` + `@vscode/test-electron` only. Vitest tests live colocated with the implementation as `src/**/*.test.ts` (excluding `src/test/**`), and `@vscode/test-cli` tests live under `src/test/**/*.test.ts`.
 
 #### Biome
 
@@ -101,19 +101,26 @@ churrasco-break/
     tasks.json
   src/
     extension.ts
+    extension.test.ts                — Vitest, mocks `vscode`
     constants/
       meats.ts
+      meats.test.ts
       commands.ts
       configuration.ts
+      configuration.test.ts
     domain/
       meat.ts
       session.ts
       log.ts
     services/
       ChurrascoSessionService.ts
+      ChurrascoSessionService.test.ts
       MeatDeckService.ts
+      MeatDeckService.test.ts
       SatietyService.ts
+      SatietyService.test.ts
       TodayLogService.ts
+      TodayLogService.test.ts
     storage/
       ChurrascoStateRepository.ts
     ui/
@@ -124,14 +131,14 @@ churrasco-break/
       ChurrascoTreeDataProvider.ts
       ChurrascoTreeItem.ts
     test/
-      MeatDeckService.test.ts
-      ChurrascoSessionService.test.ts
-      extension.test.ts
+      extension.test.ts              — @vscode/test-cli, runs in an Extension Host
   package.json
   tsconfig.json
   esbuild.js
   README.md
 ```
+
+Vitest tests are colocated with their implementation file using the `*.test.ts` suffix (`vitest.config.ts` picks up `src/**/*.test.ts` while excluding `src/test/**`). `@vscode/test-cli` tests live exclusively under `src/test/**/*.test.ts` and are compiled separately via `tsconfig.test.json` to `out/test/**/*.js` for the Extension Host.
 
 ## Module responsibilities
 
@@ -158,14 +165,16 @@ Does **not**:
 
 ### `ChurrascoSessionService`
 
-- Start a session.
+- Start a session (from `stopped` or as a resume from `paused`).
 - Stop a session.
 - Pause.
 - Handle the timer tick.
 - Handle a meat arrival.
-- Handle eat.
-- Handle pass.
-- Decide when the user is full.
+- Handle eat (M4).
+- Handle pass (M4).
+- Decide when the user is full (M5).
+
+Implements `vscode.Disposable` so it can be pushed into `ExtensionContext.subscriptions` to ensure the timer and `EventEmitter` are torn down on `deactivate`. Exposes `onStateChange: Event<ChurrascoSessionState>` for UI controllers (M3+) to subscribe to. See [ADR-0003](../adr/0003-session-and-timer-design.md) for the command boundary semantics, idempotency guard, and configuration handling.
 
 ### `MeatDeckService`
 

@@ -75,23 +75,22 @@ When the date changes:
 
 #### `churrasco.startSession`
 
-- Set `status` to `running`.
-- Set `nextArrivalAt` to `now + intervalMinutes`.
-- Refresh the status bar.
-- If already `running`, do nothing.
+- From `stopped`: set `status` to `running`, set `startedAt` to `now`, set `nextArrivalAt` to `now + intervalMinutes`, snapshot `today` to today's date, and refresh the status bar.
+- From `paused`: resume by setting `status` to `running` while keeping `nextArrivalAt`. There is no separate resume command — `startSession` is the only entry back into `running` from `paused` ([ADR-0003 §4](../adr/0003-session-and-timer-design.md)).
+- From `running`, `meatArrived`, or `full`: no-op.
 
 #### `churrasco.stopSession`
 
 - Set `status` to `stopped`.
 - Set `currentMeatId` to `null`.
 - Set `nextArrivalAt` to `null`.
-- Show the end-of-session summary.
+- Show the end-of-session summary (M5).
+- A `stopped → stopped` invocation is suppressed by the shallow-equal guard so it does not re-emit the summary ([ADR-0003 §5](../adr/0003-session-and-timer-design.md)).
 
 #### `churrasco.pauseSession`
 
-- Set `status` to `paused`.
-- Keep `nextArrivalAt`.
-- Show "paused" in the status bar.
+- From `running`: set `status` to `paused`, keep `nextArrivalAt`, show "paused" in the status bar. The internal tick keeps running but skips arrivals while paused.
+- From any other state: no-op.
 
 #### `churrasco.eatCurrentMeat`
 
@@ -132,6 +131,10 @@ When the date changes:
 ### `churrasco.intervalMinutes`
 
 Interval between meat arrivals, in minutes. Default `10`. During development and testing this can be set to `1` or `0.1`.
+
+The value is sanitized at the extension boundary by `sanitizeInterval` in `src/constants/configuration.ts`: any non-finite, zero, negative, or non-numeric value (e.g. user edits in `settings.json` that bypass the JSON schema) falls back to `DEFAULT_INTERVAL_MINUTES` (`10`). The session service itself assumes a positive finite number and carries no defensive guard ([ADR-0003 §7](../adr/0003-session-and-timer-design.md)).
+
+The setting is read as a snapshot on each `startSession`. Reactivity to `workspace.onDidChangeConfiguration` is deferred to M3 when the status-bar countdown lands.
 
 ### `churrasco.enableNotifications`
 

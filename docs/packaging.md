@@ -1,8 +1,10 @@
 # Packaging
 
-This document captures the v0.1 `package.json` blueprint. It is the concrete contribution surface — commands, configuration, and views — that the spec maps to. Cross-references: [State & Commands](spec/state-and-commands.md), [Architecture](spec/architecture.md).
+This document captures the **v0.1 final-form** `package.json` blueprint — the concrete contribution surface (commands, configuration, views) that the spec maps to once every milestone has shipped. Cross-references: [State & Commands](spec/state-and-commands.md), [Architecture](spec/architecture.md).
 
 The toolchain is pinned via `packageManager: "pnpm@<version>"` (activated by Corepack), `engines.node: ">=24"`, and `engines.vscode: "^1.90.0"`. All scripts assume `pnpm`. Quality and tests are run via Biome / Vitest / `@vscode/test-cli` rather than ESLint / Prettier / Mocha-as-unit-runner.
+
+> **Note:** `contributes.commands` and `contributes.views` are added incrementally per milestone — see the [Roadmap](roadmap.md). Today the live `package.json` declares only the commands implemented through the latest milestone (M0–M2: `startSession`, `stopSession`, `pauseSession`); the remaining entries below are introduced as their owning milestone lands.
 
 ```json
 {

@@ -17,3 +17,9 @@ If you are new here, start with the [Overview](spec/overview.md) and skim the [U
 
 - [Roadmap](roadmap.md) — v0.1 milestones (M0–M7) and v0.2+ candidates
 - [Packaging](packaging.md) — `package.json` blueprint
+
+## Architecture Decision Records
+
+- [ADR-0001](adr/0001-development-startup-strategy.md) — development startup strategy for v0.1
+- [ADR-0002](adr/0002-meat-deck-service-design.md) — `MeatDeckService` design (M1)
+- [ADR-0003](adr/0003-session-and-timer-design.md) — `ChurrascoSessionService` and timer design (M2)
