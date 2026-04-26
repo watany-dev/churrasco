@@ -4,7 +4,11 @@ Churrasco Break is a VS Code extension that delivers a different cut of churrasc
 
 When a meat arrives you can **Eat**, **Pass**, or **End for the day**. Every meat you eat is recorded in today's log, and your satiety, meat collection, and titles grow over time.
 
-## Features
+## Status
+
+Active v0.1 development. The full v0.1 scope is tracked across [Roadmap](docs/roadmap.md) milestones M0–M7. Currently shipped: a session service that draws a non-repeating meat every `intervalMinutes` (M0–M2). UI surfaces (status bar, notifications, Quick Pick, sidebar) and persistence land in M3–M6.
+
+## Features (v0.1 target)
 
 - A new meat arrives every 10 minutes.
 - Non-repeating draw until the deck cycles.
@@ -16,14 +20,19 @@ When a meat arrives you can **Eat**, **Pass**, or **End for the day**. Every mea
 
 ## Commands
 
-- `Churrasco: Start Service`
-- `Churrasco: End Service`
-- `Churrasco: Pause`
-- `Churrasco: Eat Current Meat`
-- `Churrasco: Pass Current Meat`
-- `Churrasco: Show Today's Log`
-- `Churrasco: Open Menu`
-- `Churrasco: Reset Today's Log`
+Implemented (M0–M2):
+
+- `Churrasco: Start Service` — `churrasco.startSession`
+- `Churrasco: End Service` — `churrasco.stopSession`
+- `Churrasco: Pause` — `churrasco.pauseSession`
+
+Planned (M3–M5):
+
+- `Churrasco: Eat Current Meat` — `churrasco.eatCurrentMeat`
+- `Churrasco: Pass Current Meat` — `churrasco.passCurrentMeat`
+- `Churrasco: Show Today's Log` — `churrasco.showTodayLog`
+- `Churrasco: Open Menu` — `churrasco.openMenu`
+- `Churrasco: Reset Today's Log` — `churrasco.resetToday`
 
 ## Settings
 
@@ -34,6 +43,35 @@ When a meat arrives you can **Eat**, **Pass**, or **End for the day**. Every mea
 - `churrasco.maxSatiety`
 - `churrasco.autoStopWhenFull`
 - `churrasco.locale`
+
+## Development
+
+Prerequisites:
+
+- Node.js 24 or newer (pinned via `.nvmrc` and `engines.node`)
+- pnpm 10.x (pinned via `packageManager`, activate with Corepack)
+- VS Code 1.90 or newer (for the integration tests)
+
+Common scripts:
+
+```bash
+pnpm install            # install dependencies (CI uses --frozen-lockfile)
+pnpm compile            # type-check, emit @vscode/test-cli artifacts, esbuild bundle
+pnpm watch              # tsc --noEmit and esbuild --watch in parallel
+pnpm lint               # Biome check (lint + format + import sort)
+pnpm lint:fix           # Biome auto-fix
+pnpm format             # Biome format --write
+pnpm knip               # detect unused files / exports / dependencies
+pnpm test:unit          # Vitest unit tests with coverage
+pnpm test:vscode        # @vscode/test-cli integration tests in an Extension Host
+pnpm test               # test:unit + test:vscode
+pnpm package            # build a .vsix with @vscode/vsce
+pnpm ci                 # local CI: biome ci, check-types, knip, vitest --coverage, audit
+```
+
+Each task must finish with `pnpm ci` green before committing. The CI workflow (`.github/workflows/ci.yml`) runs the same checks plus `pnpm test:vscode` and `pnpm package`.
+
+Press F5 in VS Code to launch an Extension Development Host with the bundled extension loaded.
 
 ## Documentation
 
@@ -47,3 +85,4 @@ The full specification, architecture, and roadmap live in [`docs/`](docs/README.
 - [Acceptance Criteria](docs/spec/acceptance.md) — definition of done for v0.1
 - [Roadmap](docs/roadmap.md) — v0.1 milestones and v0.2+ candidates
 - [Packaging](docs/packaging.md) — `package.json` blueprint
+- [ADRs](docs/adr/) — architecture decision records

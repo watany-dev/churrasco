@@ -16,7 +16,7 @@ function createSeededRng(seed: number): () => number {
 describe('drawNext', () => {
   it('serves all 12 meats in a single cycle without repeats', () => {
     const rng = createSeededRng(1);
-    let state: MeatDeckState = { deck: [], lastServedMeatId: null };
+    let state: MeatDeckState = { meatDeck: [], lastServedMeatId: null };
     const seen: string[] = [];
     for (let i = 0; i < 12; i++) {
       const result = drawNext(state, DEFAULT_MEATS, rng);
@@ -24,37 +24,37 @@ describe('drawNext', () => {
       state = result.state;
     }
     expect(new Set(seen).size).toBe(12);
-    expect(state.deck).toHaveLength(0);
+    expect(state.meatDeck).toHaveLength(0);
   });
 
   it('updates lastServedMeatId to the drawn meat', () => {
     const rng = createSeededRng(42);
-    const state: MeatDeckState = { deck: [], lastServedMeatId: null };
+    const state: MeatDeckState = { meatDeck: [], lastServedMeatId: null };
     const result = drawNext(state, DEFAULT_MEATS, rng);
     expect(result.state.lastServedMeatId).toBe(result.meat.id);
   });
 
   it('uses Math.random when no rng is supplied', () => {
-    const state: MeatDeckState = { deck: [], lastServedMeatId: null };
+    const state: MeatDeckState = { meatDeck: [], lastServedMeatId: null };
     const result = drawNext(state, DEFAULT_MEATS);
     expect(DEFAULT_MEATS.some((m) => m.id === result.meat.id)).toBe(true);
-    expect(result.state.deck).toHaveLength(11);
+    expect(result.state.meatDeck).toHaveLength(11);
   });
 
   // Seed 30 puts 'picanha' at the head of the freshly shuffled deck;
   // the swap moves it to position 1 and serves 'abacaxi' instead.
-  it('swaps deck[0] with deck[1] when refilled head equals lastServedMeatId', () => {
+  it('swaps meatDeck[0] with meatDeck[1] when refilled head equals lastServedMeatId', () => {
     const rng = createSeededRng(30);
-    const state: MeatDeckState = { deck: [], lastServedMeatId: 'picanha' };
+    const state: MeatDeckState = { meatDeck: [], lastServedMeatId: 'picanha' };
     const result = drawNext(state, DEFAULT_MEATS, rng);
     expect(result.meat.id).toBe('abacaxi');
-    expect(result.state.deck[0]).toBe('picanha');
+    expect(result.state.meatDeck[0]).toBe('picanha');
   });
 
   // Seed 1 produces 'cupim' at the head, so no swap is needed.
   it('does not swap when refilled head differs from lastServedMeatId', () => {
     const rng = createSeededRng(1);
-    const state: MeatDeckState = { deck: [], lastServedMeatId: 'picanha' };
+    const state: MeatDeckState = { meatDeck: [], lastServedMeatId: 'picanha' };
     const result = drawNext(state, DEFAULT_MEATS, rng);
     expect(result.meat.id).toBe('cupim');
   });

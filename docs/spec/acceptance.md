@@ -43,10 +43,11 @@ v0.1 is considered done when all of the following hold.
 - Setting `showStatusBar` to `false` hides the status bar item.
 
 [Quality]
-- `npm run compile` succeeds.
-- `npm run lint` succeeds.
-- `npm run test` succeeds.
-- A VSIX can be produced.
+- `pnpm compile` succeeds.
+- `pnpm lint` succeeds.
+- `pnpm test` succeeds.
+- `pnpm ci` succeeds (biome ci, type-check, knip, vitest --coverage above thresholds, audit).
+- A VSIX can be produced via `pnpm package`.
 ```
 
 ## Implementation priority
