@@ -31,6 +31,18 @@
       {
         "command": "churrasco.pauseSession",
         "title": "Churrasco: Pause"
+      },
+      {
+        "command": "churrasco.openMenu",
+        "title": "Churrasco: Open Menu"
+      },
+      {
+        "command": "churrasco.eatCurrentMeat",
+        "title": "Churrasco: Eat Current Meat"
+      },
+      {
+        "command": "churrasco.passCurrentMeat",
+        "title": "Churrasco: Pass Current Meat"
       }
     ],
     "configuration": {
