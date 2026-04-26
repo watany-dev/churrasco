@@ -1,7 +1,7 @@
 import type { Meat } from '../domain/meat';
 
 export interface MeatDeckState {
-  deck: string[];
+  meatDeck: string[];
   lastServedMeatId: string | null;
 }
 
@@ -27,22 +27,22 @@ export function drawNext(
   allMeats: Meat[],
   rng: () => number = Math.random,
 ): { meat: Meat; state: MeatDeckState } {
-  let deck: string[];
-  if (state.deck.length > 0) {
-    deck = [...state.deck];
+  let meatDeck: string[];
+  if (state.meatDeck.length > 0) {
+    meatDeck = [...state.meatDeck];
   } else {
-    deck = shuffle(
+    meatDeck = shuffle(
       allMeats.map((m) => m.id),
       rng,
     );
-    if (deck[0] === state.lastServedMeatId && deck.length >= 2) {
-      [deck[0], deck[1]] = [deck[1] as string, deck[0] as string];
+    if (meatDeck[0] === state.lastServedMeatId && meatDeck.length >= 2) {
+      [meatDeck[0], meatDeck[1]] = [meatDeck[1] as string, meatDeck[0] as string];
     }
   }
-  const nextId = deck.shift() as string;
+  const nextId = meatDeck.shift() as string;
   const meat = allMeats.find((m) => m.id === nextId) as Meat;
   return {
     meat,
-    state: { deck, lastServedMeatId: meat.id },
+    state: { meatDeck, lastServedMeatId: meat.id },
   };
 }
