@@ -13,6 +13,9 @@ suite('Extension activation', () => {
       'churrasco.startSession',
       'churrasco.stopSession',
       'churrasco.pauseSession',
+      'churrasco.openMenu',
+      'churrasco.eatCurrentMeat',
+      'churrasco.passCurrentMeat',
     ]) {
       assert.ok(allCommands.includes(id), `${id} is not registered`);
     }
