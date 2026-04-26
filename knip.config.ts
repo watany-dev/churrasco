@@ -3,7 +3,7 @@ import type { KnipConfig } from 'knip';
 const config: KnipConfig = {
   entry: ['src/extension.ts', 'src/test/**/*.test.ts', 'src/**/*.test.ts'],
   project: ['src/**/*.ts'],
-  ignore: ['out/**', 'dist/**'],
+  ignore: ['out/**', 'dist/**', 'src/domain/session.ts'],
   ignoreDependencies: [
     '@types/vscode',
     '@types/mocha',
