@@ -6,7 +6,7 @@
 
 The goal is not a strict Pomodoro timer but a light rhythm and a bit of play that does not seriously interrupt your flow. When a meat arrives, the user can choose **Eat**, **Pass**, or **End for the day**. Eaten meats are recorded in that day's log.
 
-In v0.1 the implementation centers on the status bar, notifications, Quick Pick, and a simple sidebar. A more elaborate Webview-based churrasco board is deferred to v0.2 and beyond.
+In v0.1 the implementation centers on the status bar, notifications, Quick Pick, and a simple sidebar. A more elaborate Webview-based churrasco board is out of scope for v0.1.
 
 ## 2. Concept
 
@@ -60,5 +60,3 @@ Normally the status bar shows "time until the next meat." After 10 minutes the m
 - Per-workspace detailed statistics.
 - AI-generated meat commentary.
 - External API integrations.
-
-These items are tracked under v0.2+ candidates in the [Roadmap](../roadmap.md).

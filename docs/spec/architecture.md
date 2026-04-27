@@ -51,7 +51,7 @@ State storage:
 
 UI:
   Native VS Code UI only in v0.1
-  Webview is deferred to v0.2+
+  Webview is out of scope for v0.1
 ```
 
 ### Why these choices
@@ -90,7 +90,7 @@ The data we save in v0.1 is a small JSON-shaped state. We do not need a database
 
 #### Why no Webview in v0.1
 
-A Webview is expressive but adds HTML/CSS/JS, message passing, security configuration, and state synchronization. v0.1 prioritizes the core loop — "a different meat every 10 minutes; eat or pass." Webview is on the [Roadmap](../roadmap.md) for v0.2+.
+A Webview is expressive but adds HTML/CSS/JS, message passing, security configuration, and state synchronization. v0.1 prioritizes the core loop — "a different meat every 10 minutes; eat or pass."
 
 ## Recommended directory layout
 
@@ -170,9 +170,8 @@ Does **not**:
 - Pause.
 - Handle the timer tick.
 - Handle a meat arrival.
-- Handle eat (M4).
-- Handle pass (M4).
-- Decide when the user is full (M5).
+- Handle eat.
+- Handle pass.
 
 Implements `vscode.Disposable` so it can be pushed into `ExtensionContext.subscriptions` to ensure the timer and `EventEmitter` are torn down on `deactivate`. Exposes `onStateChange: Event<ChurrascoSessionState>` for UI controllers (M3+) to subscribe to. See [ADR-0003](../adr/0003-session-and-timer-design.md) for the command boundary semantics, idempotency guard, and configuration handling.
 
