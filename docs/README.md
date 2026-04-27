@@ -29,6 +29,7 @@ If you are new here, start with the [Overview](spec/overview.md) and skim the [U
 - [ADR-0007](adr/0007-persistence-layer.md) — persistence layer (M5)
 - [ADR-0008](adr/0008-today-log-and-satiety.md) — today log and satiety services (M5)
 - [ADR-0009](adr/0009-today-summary-and-auto-stop.md) — today summary and auto-stop UI flow (M5)
+- [ADR-0010](adr/0010-sidebar-tree-view-design.md) — sidebar Tree View design (M6)
 
 ADR テンプレート: [`adr/_template.md`](adr/_template.md)（ADR-0006 以降に適用）
 
