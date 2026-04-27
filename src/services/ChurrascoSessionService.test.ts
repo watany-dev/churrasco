@@ -213,13 +213,63 @@ describe('ChurrascoSessionService', () => {
       service.dispose();
     });
 
-    it('does not re-arrive once already in meatArrived', () => {
-      const { service, events } = createService({ intervalMinutes: 0.1 });
+    it('schedules nextArrivalAt for the cooled tick when meatArrived', () => {
+      const { service } = createService({ intervalMinutes: 0.1 });
       service.start();
       vi.advanceTimersByTime(7_000);
-      const eventsAfterArrival = events.length;
-      vi.advanceTimersByTime(60_000);
-      expect(events.length).toBe(eventsAfterArrival);
+      expect(service.state.status).toBe('meatArrived');
+      // The first tick fires at FROZEN_NOW + 6_000 (interval boundary), and the
+      // service schedules the cooled deadline as nextArrivalAt = now + intervalMs.
+      expect(service.state.nextArrivalAt).toBe(new Date(FROZEN_NOW + 6_000 + 6_000).toISOString());
+      service.dispose();
+    });
+  });
+
+  describe('cooled tick', () => {
+    it('cools the previous meat and draws a new one when the user does not respond', () => {
+      const { service, logs } = createService({
+        intervalMinutes: 0.1,
+        generateLogId: () => 'cooled-log',
+      });
+      service.start();
+      vi.advanceTimersByTime(7_000);
+      const firstMeatId = service.state.currentMeatId;
+      vi.advanceTimersByTime(7_000);
+
+      expect(service.state.status).toBe('meatArrived');
+      expect(service.state.currentMeatId).not.toBe(firstMeatId);
+      expect(service.state.nextArrivalAt).toBe(
+        new Date(FROZEN_NOW + 6_000 + 6_000 + 6_000).toISOString(),
+      );
+      expect(logs).toHaveLength(1);
+      expect(logs[0]).toMatchObject({
+        id: 'cooled-log',
+        meatId: firstMeatId,
+        action: 'cooled',
+        satietyDelta: 0,
+      });
+      service.dispose();
+    });
+
+    it('does not emit cooled when transitioning from running to meatArrived', () => {
+      const { service, logs } = createService({ intervalMinutes: 0.1 });
+      service.start();
+      vi.advanceTimersByTime(7_000);
+      expect(service.state.status).toBe('meatArrived');
+      expect(logs).toHaveLength(0);
+      service.dispose();
+    });
+
+    it('fires onStateChange before onMeatLogged on cooled tick', () => {
+      const { service } = createService({ intervalMinutes: 0.1 });
+      const order: string[] = [];
+      service.onStateChange(() => order.push('state'));
+      service.onMeatLogged(() => order.push('log'));
+      service.start();
+      vi.advanceTimersByTime(7_000);
+      order.length = 0;
+      vi.advanceTimersByTime(7_000);
+      expect(order).toEqual(['state', 'log']);
       service.dispose();
     });
   });

@@ -160,12 +160,13 @@ export class ChurrascoSessionService implements Disposable {
   private tick(): void {
     const now = this.now();
     const { status, nextArrivalAt } = this.currentState;
-    if (status !== 'running' || nextArrivalAt === null) {
+    if ((status !== 'running' && status !== 'meatArrived') || nextArrivalAt === null) {
       return;
     }
     if (Date.parse(nextArrivalAt) > now) {
       return;
     }
+    const previousMeatId = this.currentState.currentMeatId;
     const result = drawNext(
       {
         meatDeck: this.currentState.meatDeck,
@@ -174,15 +175,25 @@ export class ChurrascoSessionService implements Disposable {
       this.meats,
       this.rng,
     );
+    const intervalMs = this.getIntervalMinutes() * 60_000;
     this.setState({
       ...this.currentState,
       status: 'meatArrived',
       currentMeatId: result.meat.id,
       meatDeck: result.state.meatDeck,
       lastServedMeatId: result.state.lastServedMeatId,
-      nextArrivalAt: null,
+      nextArrivalAt: new Date(now + intervalMs).toISOString(),
       lastTickAt: new Date(now).toISOString(),
     });
+    if (status === 'meatArrived' && previousMeatId !== null) {
+      this.logEmitter.fire({
+        id: this.generateLogId(),
+        meatId: previousMeatId,
+        action: 'cooled',
+        createdAt: new Date(now).toISOString(),
+        satietyDelta: 0,
+      });
+    }
   }
 
   private lookupCurrentMeat(): Meat | null {
