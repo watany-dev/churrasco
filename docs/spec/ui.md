@@ -1,6 +1,6 @@
 # UI Specification
 
-> **Language note (v0.1)**: the visible-text examples in this document are written in English so the spec stays language-neutral. The v0.1 implementation deliberately localizes only meat-arrival notifications to Japanese (meat name `nameJa` plus the fixed phrase「が焼き上がりました」, buttons `食べる` / `パス` / `今日は終了`); StatusBar and QuickPick remain English-fixed as shipped in M3. Full UI language unification is deferred to a later ADR ([ADR-0005 §10](../adr/0005-notifications-and-meat-actions-design.md)).
+> **Language note (v0.1)**: the visible-text examples in this document are written in English so the spec stays language-neutral. The v0.1 implementation deliberately localizes only meat-arrival notifications to Japanese (meat name `nameJa` plus the fixed phrase「が焼き上がりました」, buttons `食べる` / `パス` / `今日は終了`); StatusBar and QuickPick remain English-fixed. Full UI language unification is not implemented ([ADR-0005 §10](../adr/0005-notifications-and-meat-actions-design.md)).
 
 ## Status bar
 
@@ -99,11 +99,6 @@ Display rules:
 - Items are filtered by session state.
 - If there is no current meat, **Eat** and **Pass** are hidden.
 - Today's meat log is always available.
-
-> Milestone note: M3 ships every item except `📋 Show today's meat log`,
-> which lands together with the M5 `churrasco.showTodayLog` command and
-> the `TodayLogService`. Eat / Pass are wired to stub commands in M3 and
-> get their real handlers in M4 ([ADR-0004 §2](../adr/0004-statusbar-and-quickpick-design.md)).
 
 ## Sidebar Tree View
 
