@@ -6,7 +6,7 @@ When a meat arrives you can **Eat**, **Pass**, or **End for the day**. Every mea
 
 ## Status
 
-Active v0.1 development. The full v0.1 scope is tracked across [Roadmap](docs/roadmap.md) milestones M0–M7. Currently shipped: session service with a non-repeating meat draw, status bar countdown, Quick Pick menu, arrival notifications wired to Eat / Pass / End-for-the-day handlers, and the `cooled` flow that auto-records meats that go untouched before the next arrival (M0–M4). M5 adds today's log, satiety, the lifetime meat collection, persistence via `ExtensionContext.globalState`, an end-of-session summary, and `autoStopWhenFull` behavior. The simple sidebar Tree View lands in M6.
+Active v0.1 development. The full v0.1 scope is tracked across [Roadmap](docs/roadmap.md) milestones M0–M7. Currently shipped: session service with a non-repeating meat draw, status bar countdown, Quick Pick menu, arrival notifications wired to Eat / Pass / End-for-the-day handlers, and the `cooled` flow that auto-records meats that go untouched before the next arrival (M0–M4). M5 adds today's log, satiety, the lifetime meat collection, persistence via `ExtensionContext.globalState`, an end-of-session summary, and `autoStopWhenFull` behavior. M6 ships the simple sidebar Tree View (service status / today's meats / meat collection) on a dedicated activity bar container. M7 (tests and packaging) is the remaining milestone.
 
 ## Features (v0.1 target)
 
@@ -20,7 +20,7 @@ Active v0.1 development. The full v0.1 scope is tracked across [Roadmap](docs/ro
 
 ## Commands
 
-Implemented (M0–M5):
+Implemented (M0–M6):
 
 - `Churrasco: Start Service` — `churrasco.startSession`
 - `Churrasco: End Service` — `churrasco.stopSession`

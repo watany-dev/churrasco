@@ -63,7 +63,7 @@ pnpm ci
 
 ## Architecture
 
-現状（M0〜M5 完了）の `src/` 構成:
+現状（M0〜M6 完了）の `src/` 構成:
 
 ```
 src/
@@ -93,17 +93,14 @@ src/
     NotificationController.ts        — 肉到着通知・edge 検出
     QuickPickController.ts           — 動的メニュー
     EndOfSessionSummaryController.ts — stopped edge でサマリー通知
+  views/
+    buildSidebarSections.ts          — 純関数: state → SidebarNode[]
+    ChurrascoTreeItem.ts             — vscode.TreeItem サブクラス
+    ChurrascoTreeDataProvider.ts     — サイドバー Tree View（onStateChange + onChange + 1Hz countdown）
   test/
     extension.test.ts                — @vscode/test-cli 統合テスト
-```
-
-M6 で追加予定の構成（`docs/roadmap.md` 参照）:
-
-```
-src/
-  views/
-    ChurrascoTreeDataProvider.ts     — サイドバー Tree View（M6）
-    ChurrascoTreeItem.ts             — Tree View アイテム（M6）
+resources/
+  churrasco.svg                      — Activity Bar アイコン
 ```
 
 ユニットテストは各実装ファイルと同じ階層に `*.test.ts` で置き、Vitest が `src/**/*.test.ts`（ただし `src/test/**` を除く）を拾う。`src/test/**` 配下は VS Code 拡張ホスト上で動かす統合テスト専用。

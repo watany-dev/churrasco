@@ -136,8 +136,11 @@ churrasco-break/
     views/
       ChurrascoTreeDataProvider.ts
       ChurrascoTreeItem.ts
+      buildSidebarSections.ts
     test/
       extension.test.ts              — @vscode/test-cli, runs in an Extension Host
+  resources/
+    churrasco.svg                    — activity bar icon (SVG, 24x24, currentColor)
   package.json
   tsconfig.json
   esbuild.js
