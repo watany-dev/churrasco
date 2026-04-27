@@ -1,5 +1,7 @@
 # UI Specification
 
+> **Language note (v0.1)**: the visible-text examples in this document are written in English so the spec stays language-neutral. The v0.1 implementation deliberately localizes only meat-arrival notifications to Japanese (meat name `nameJa` plus the fixed phrase「が焼き上がりました」, buttons `食べる` / `パス` / `今日は終了`); StatusBar and QuickPick remain English-fixed as shipped in M3. Full UI language unification is deferred to a later ADR ([ADR-0005 §10](../adr/0005-notifications-and-meat-actions-design.md)).
+
 ## Status bar
 
 The status bar is the central piece of always-visible UI.

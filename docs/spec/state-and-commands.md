@@ -134,11 +134,11 @@ Interval between meat arrivals, in minutes. Default `10`. During development and
 
 The value is sanitized at the extension boundary by `sanitizeInterval` in `src/constants/configuration.ts`: any non-finite, zero, negative, or non-numeric value (e.g. user edits in `settings.json` that bypass the JSON schema) falls back to `DEFAULT_INTERVAL_MINUTES` (`10`). The session service itself assumes a positive finite number and carries no defensive guard ([ADR-0003 §7](../adr/0003-session-and-timer-design.md)).
 
-The setting is read as a snapshot on each `startSession`. Reactivity to `workspace.onDidChangeConfiguration` for `intervalMinutes` is deferred to M4+ ([ADR-0004 §3](../adr/0004-statusbar-and-quickpick-design.md)) because mid-session interval changes require deciding how to recompute `nextArrivalAt`. M3 only wires reactivity for `churrasco.showStatusBar`.
+The setting is read as a snapshot on each `startSession`. Reactivity to `workspace.onDidChangeConfiguration` for `intervalMinutes` remains deferred past M4 ([ADR-0005 §8](../adr/0005-notifications-and-meat-actions-design.md), reaffirming [ADR-0004 §3](../adr/0004-statusbar-and-quickpick-design.md)) because mid-session interval changes require deciding how to recompute `nextArrivalAt`, and ADR-0005 §1 expanded the meaning of `nextArrivalAt` to also drive the cooled tick. M3 wires reactivity for `churrasco.showStatusBar`; ADR-0005 §5 keeps `enableNotifications` snapshotted at the meat-arrival edge instead of reactive.
 
 ### `churrasco.enableNotifications`
 
-When `true`, show a notification on meat arrival. When `false`, only the status bar and sidebar update.
+When `true`, show a notification on meat arrival. When `false`, only the status bar and sidebar update. Sanitized via `sanitizeBoolean` in `src/constants/configuration.ts`. Read as a snapshot at the `running → meatArrived` edge by `NotificationController` ([ADR-0005 §5](../adr/0005-notifications-and-meat-actions-design.md)); not wired to `onDidChangeConfiguration`.
 
 ### `churrasco.showStatusBar`
 

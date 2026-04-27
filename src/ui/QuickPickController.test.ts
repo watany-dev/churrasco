@@ -54,6 +54,7 @@ function createController(): {
   const service = new ChurrascoSessionService({
     meats: DEFAULT_MEATS,
     getIntervalMinutes: () => 10,
+    getMaxSatiety: () => 100,
   });
   const controller = new QuickPickController({ service });
   return { controller, service };
