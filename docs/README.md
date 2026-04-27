@@ -27,6 +27,7 @@ If you are new here, start with the [Overview](spec/overview.md) and skim the [U
 - [ADR-0005](adr/0005-notifications-and-meat-actions-design.md) — notifications and meat actions (M4)
 - [ADR-0006](adr/0006-docs-governance.md) — docs governance: SSOT, three-layer structure, ADR immutability
 - [ADR-0007](adr/0007-persistence-layer.md) — persistence layer (M5)
+- [ADR-0008](adr/0008-today-log-and-satiety.md) — today log and satiety services (M5)
 
 ADR テンプレート: [`adr/_template.md`](adr/_template.md)（ADR-0006 以降に適用）
 

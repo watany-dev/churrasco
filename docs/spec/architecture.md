@@ -182,6 +182,23 @@ Implements `vscode.Disposable` so it can be pushed into `ExtensionContext.subscr
 - Refill the deck.
 - Avoid back-to-back duplicates across refills.
 
+### `SatietyService`
+
+- Compute the next satiety value after eating a meat.
+- Return whether the new value reaches `maxSatiety`.
+
+Pure-function module (no internal state). The session layer owns the current satiety value and consumes only the computed result. Boundary `sanitize*` helpers in `src/constants/configuration.ts` are the single sanitization point; `applyEat` carries no defensive guards. See [ADR-0008](../adr/0008-today-log-and-satiety.md).
+
+### `TodayLogService`
+
+- Hold today's `MeatLogEntry[]`.
+- Hold lifetime aggregates: `perMeatEncounter` and `eaten` counters.
+- Append entries (`recordEntry`) and increment encounters (`recordEncounter`).
+- Reset today's log on date rollover or via the `churrasco.resetToday` command.
+- Expose `onChange: Event<void>` for persistence and UI subscribers.
+
+Stateful service constructed with `initialState` from `PersistedSnapshot`. Subscribes (via `extension.ts` wiring) to `ChurrascoSessionService.onMeatLogged` and `ChurrascoSessionService.onMeatServed`. Does not import `ChurrascoSessionService` directly. See [ADR-0008](../adr/0008-today-log-and-satiety.md).
+
 ### `StatusBarController`
 
 - Create the status bar item.

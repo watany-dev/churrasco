@@ -94,6 +94,59 @@ Every `onStateChange` and `onMeatLogged` event triggers `repository.save(...)` a
 - Unknown `meatId` in `meatDeck` → drop the entry; an empty deck recovers via the next `drawNext` refill.
 - Unknown `meatId` in `todayLog` → keep the entry (past-log meaning is preserved). Display fallback for unknown meats is the UI's concern.
 
+## Today log and satiety
+
+Behavior split between `SatietyService` (pure functions) and `TodayLogService` (stateful aggregator). Decision rationale and alternatives are recorded in [ADR-0008](../adr/0008-today-log-and-satiety.md).
+
+### `SatietyService`
+
+```ts
+export function applyEat(
+  currentSatiety: number,
+  meat: Meat,
+  maxSatiety: number,
+): { nextSatiety: number; isFull: boolean };
+```
+
+- `nextSatiety = currentSatiety + meat.satiety`.
+- `isFull = nextSatiety >= maxSatiety` ([ADR-0003 §3](../adr/0003-session-and-timer-design.md)).
+- No internal state. Defensive guards for non-finite / negative inputs are not added; the boundary `sanitize*` helpers in `src/constants/configuration.ts` are the single sanitization point ([ADR-0003 §7](../adr/0003-session-and-timer-design.md)).
+- The decision to act on `isFull === true` (transition to `'full'` vs auto-stop to `'stopped'`) is owned by the session layer per the `autoStopWhenFull` setting; specifics are recorded separately (see Settings § below).
+
+### `TodayLogService`
+
+State held by the service:
+
+```ts
+{
+  todayLog: MeatLogEntry[];
+  lifetime: {
+    perMeatEncounter: Record<string, number>;
+    eaten: number;
+  };
+}
+```
+
+API:
+
+- `recordEntry(entry: MeatLogEntry): void` — appends to `todayLog`. If `entry.action === 'eaten'`, also increments `lifetime.eaten`. The two side effects are intentionally fused into one API to preserve atomicity ([ADR-0008 §D8](../adr/0008-today-log-and-satiety.md)).
+- `recordEncounter(meatId: string): void` — increments `lifetime.perMeatEncounter[meatId]`. Called when a meat is served, regardless of `enableNotifications` ([ADR-0008 §D7](../adr/0008-today-log-and-satiety.md)).
+- `resetToday(): void` — clears `todayLog` only; `lifetime` is preserved. Used both by the date rollover wiring and by the `churrasco.resetToday` command.
+- `get todayLog(): readonly MeatLogEntry[]` and `get lifetime(): Readonly<...>` — read access.
+- `onChange: Event<void>` — single notification point for persistence and UI subscribers.
+
+The constructor takes `initialState: { todayLog, lifetime }` derived from `PersistedSnapshot` after the date-rollover transformation. The service itself does not detect date changes ([ADR-0008 §D10](../adr/0008-today-log-and-satiety.md)).
+
+### Wiring
+
+`extension.ts` is the only module that knows about both services. It bridges:
+
+- `ChurrascoSessionService.onMeatLogged` → `TodayLogService.recordEntry`
+- `ChurrascoSessionService.onMeatServed` → `TodayLogService.recordEncounter` (where `onMeatServed: Event<{ meatId: string; servedAt: string }>` is fired by `ChurrascoSessionService.tick()` at the `meatArrived` transition edge)
+- `ChurrascoSessionService.onStateChange` ∪ `TodayLogService.onChange` → pull current state from both services, build a `PersistedSnapshot`, call `repository.save(snapshot)` fire-and-forget ([ADR-0008 §D9](../adr/0008-today-log-and-satiety.md)).
+
+The reverse direction (`TodayLogService` → `ChurrascoSessionService`) is not wired. `ChurrascoSessionService` does not import `TodayLogService`.
+
 ## Commands
 
 ### Catalog
