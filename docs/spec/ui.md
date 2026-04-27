@@ -102,7 +102,7 @@ Display rules:
 
 ## Sidebar Tree View
 
-v0.1 ships a simple sidebar.
+v0.1 ships a simple sidebar. Tree View labels are English-fixed, matching the StatusBar / QuickPick policy in the §Language note above ([ADR-0010 §D4](../adr/0010-sidebar-tree-view-design.md)).
 
 ```text
 CHURRASCO BREAK

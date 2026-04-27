@@ -12,7 +12,7 @@
 | M3 — Status bar and Quick Pick | ✅ Done |
 | M4 — Notifications and meat actions | ✅ Done |
 | M5 — Log, satiety, persistence | ✅ Done |
-| M6 — Simple sidebar | ⏳ Planned |
+| M6 — Simple sidebar | ✅ Done |
 | M7 — Tests and packaging | ⏳ Planned |
 
 ### Milestone 0 — Project bootstrap
