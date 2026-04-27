@@ -179,8 +179,8 @@ The reverse direction (`TodayLogService` → `ChurrascoSessionService`) is not w
 - Set `status` to `stopped`.
 - Set `currentMeatId` to `null`.
 - Set `nextArrivalAt` to `null`.
-- Show the end-of-session summary.
-- A `stopped → stopped` invocation is suppressed by the shallow-equal guard so it does not re-emit the summary ([ADR-0003 §5](../adr/0003-session-and-timer-design.md)).
+- The end-of-session summary is shown by `EndOfSessionSummaryController` on the `(running | paused | meatArrived | full) → stopped` transition edge ([ADR-0009 §D2](../adr/0009-today-summary-and-auto-stop.md)). The service itself does not invoke `window.*`.
+- A `stopped → stopped` invocation is suppressed by the shallow-equal guard so the summary edge does not fire ([ADR-0003 §5](../adr/0003-session-and-timer-design.md)).
 
 #### `churrasco.pauseSession`
 
@@ -191,9 +191,11 @@ The reverse direction (`TodayLogService` → `ChurrascoSessionService`) is not w
 
 - Run only if there is a `currentMeatId`.
 - Append an `eaten` entry to the meat log.
-- Add `meat.satiety` to `satiety`.
+- Add `meat.satiety` to `satiety` via [`SatietyService.applyEat`](../adr/0008-today-log-and-satiety.md).
 - Set `currentMeatId` to `null`.
-- If `satiety >= maxSatiety`, set `status` to `full`.
+- If `isFull` (`satiety >= maxSatiety`):
+  - When `autoStopWhenFull` is `true`: transition directly to `'stopped'` (skipping `'full'`), set `nextArrivalAt` to `null`, and stop the timer ([ADR-0009 §D6](../adr/0009-today-summary-and-auto-stop.md)). The summary fires via the same edge as a manual stop.
+  - When `autoStopWhenFull` is `false`: set `status` to `'full'` and stop the timer; the user remains in `'full'` until they manually invoke `stopSession` ([ADR-0009 §D7](../adr/0009-today-summary-and-auto-stop.md)).
 - Otherwise set `nextArrivalAt` to `now + intervalMinutes`.
 
 #### `churrasco.passCurrentMeat`
@@ -206,8 +208,14 @@ The reverse direction (`TodayLogService` → `ChurrascoSessionService`) is not w
 
 #### `churrasco.showTodayLog`
 
-- Show today's log via an information message or Quick Pick.
-- v0.1 does not use a Webview.
+- Render today's log via the pure `formatTodayLog` formatter and display it through `window.showInformationMessage` ([ADR-0009 §D8](../adr/0009-today-summary-and-auto-stop.md)).
+- The displayed content follows the example in [`docs/spec/ui.md` §Today's meat log](ui.md). v0.1 does not use a Webview or Quick Pick for this command.
+
+#### `churrasco.resetToday`
+
+- Show a confirmation modal (`window.showWarningMessage(..., { modal: true }, 'Reset')`) before any state mutation ([ADR-0009 §D9](../adr/0009-today-summary-and-auto-stop.md)).
+- On `Reset`: invoke `TodayLogService.resetToday()`, which clears `todayLog` only. `lifetime` is preserved ([ADR-0008 §D4](../adr/0008-today-log-and-satiety.md)).
+- On `Cancel` or modal dismissal: no-op.
 
 ## Settings
 
@@ -249,7 +257,11 @@ Maximum value of satiety. Default `100`.
 
 ### `churrasco.autoStopWhenFull`
 
-When `true`, end the session automatically once `satiety >= maxSatiety`.
+When `true`, the session transitions directly from `'running'` to `'stopped'` (skipping `'full'`) the moment `satiety >= maxSatiety` is reached during an `eat()` call. The end-of-session summary fires through the standard `(running | paused | meatArrived | full) → stopped` edge ([ADR-0009 §D2 / §D6](../adr/0009-today-summary-and-auto-stop.md)).
+
+When `false`, the session enters `'full'` and waits for the user to invoke `stopSession` manually ([ADR-0009 §D7](../adr/0009-today-summary-and-auto-stop.md)). The `'full'` state is therefore reachable only under `autoStopWhenFull=false`.
+
+Sanitized via `sanitizeBoolean` in `src/constants/configuration.ts`. Read as a snapshot inside `ChurrascoSessionService.eat()`; not wired to `onDidChangeConfiguration`.
 
 ### `churrasco.locale`
 

@@ -156,10 +156,12 @@ Satiety: 50%
 
 ## End-of-session summary
 
-Shown when the user chooses **End for the day**.
+Shown by `EndOfSessionSummaryController` on the `(running | paused | meatArrived | full) → stopped` transition edge — that is, when the user chooses **End for the day** or when `autoStopWhenFull=true` triggers an automatic stop ([ADR-0009 §D2 / §D5 / §D6](../adr/0009-today-summary-and-auto-stop.md)). Delivered via a non-modal `window.showInformationMessage` ([ADR-0009 §D1](../adr/0009-today-summary-and-auto-stop.md)).
 
 ```text
 🏁 Today's churrasco has ended.
 Eaten: 7 / Passed: 2 / Satiety: 80%
 Title: The Refactorer Who Waits for Meat
 ```
+
+The `Title:` line is **not rendered in v0.1** ([ADR-0009 §D4](../adr/0009-today-summary-and-auto-stop.md)). The titles system is a v0.2+ candidate (see [Roadmap](../roadmap.md)).

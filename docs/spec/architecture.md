@@ -211,6 +211,13 @@ Stateful service constructed with `initialState` from `PersistedSnapshot`. Subsc
 - Forward the user's choice to the appropriate command or service.
 - No-op when notifications are disabled.
 
+### `EndOfSessionSummaryController`
+
+- Subscribe to `ChurrascoSessionService.onStateChange`.
+- On the `(running | paused | meatArrived | full) → stopped` transition edge, pull `todayLog` / `lifetime` from `TodayLogService` and `satiety` from the session, format via the pure `formatEndOfSessionSummary`, and display through a non-modal `window.showInformationMessage`.
+
+Independent from `NotificationController` (different edge, different responsibility). See [ADR-0009](../adr/0009-today-summary-and-auto-stop.md).
+
 ### `ChurrascoTreeDataProvider`
 
 - Render the service-status section.
