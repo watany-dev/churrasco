@@ -11,7 +11,7 @@
 | M2 — Session and timer | ✅ Done |
 | M3 — Status bar and Quick Pick | ✅ Done |
 | M4 — Notifications and meat actions | ✅ Done |
-| M5 — Log, satiety, persistence | ⏳ Planned |
+| M5 — Log, satiety, persistence | ✅ Done |
 | M6 — Simple sidebar | ⏳ Planned |
 | M7 — Tests and packaging | ⏳ Planned |
 
@@ -170,8 +170,9 @@ Deliverables:
 Done when:
 
 - Restarting VS Code preserves the lifetime collection.
-- Only today's log resets when the date changes.
-- Satiety reaching `maxSatiety` flips the session to `full`.
+- Only today's log resets when the date changes (next-activate detection).
+- Satiety reaching `maxSatiety` ends the session: under `autoStopWhenFull=true` the session transitions directly from `running` to `stopped`; under `autoStopWhenFull=false` it enters `full` and waits for a manual stop.
+- An end-of-session summary fires on the `(running | paused | meatArrived | full) → stopped` transition edge.
 
 ### Milestone 6 — Simple sidebar
 

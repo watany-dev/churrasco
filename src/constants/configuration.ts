@@ -5,11 +5,13 @@ export const CONFIGURATION_KEYS = {
   showStatusBar: 'showStatusBar',
   enableNotifications: 'enableNotifications',
   maxSatiety: 'maxSatiety',
+  autoStopWhenFull: 'autoStopWhenFull',
 } as const;
 
 export const DEFAULT_INTERVAL_MINUTES = 10;
 export const DEFAULT_MAX_SATIETY = 100;
 export const DEFAULT_ENABLE_NOTIFICATIONS = true;
+export const DEFAULT_AUTO_STOP_WHEN_FULL = true;
 
 const MIN_MAX_SATIETY = 10;
 

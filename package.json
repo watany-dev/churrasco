@@ -43,6 +43,14 @@
       {
         "command": "churrasco.passCurrentMeat",
         "title": "Churrasco: Pass Current Meat"
+      },
+      {
+        "command": "churrasco.showTodayLog",
+        "title": "Churrasco: Show Today's Log"
+      },
+      {
+        "command": "churrasco.resetToday",
+        "title": "Churrasco: Reset Today's Log"
       }
     ],
     "configuration": {

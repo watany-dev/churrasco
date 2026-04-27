@@ -36,21 +36,116 @@ export interface MeatLogEntry {
 
 ## Persistence
 
-v0.1 uses `ExtensionContext.globalState`.
+v0.1 uses `ExtensionContext.globalState` as the single backing store. Decision rationale and alternatives are recorded in [ADR-0007](../adr/0007-persistence-layer.md).
 
-What we persist:
+### Storage key
 
-- Session state.
-- Today's meat log.
-- Lifetime per-meat encounter count.
-- Lifetime eaten count.
-- Last launch date.
+`churrasco.state.v1` — a single JSON-serialized `PersistedSnapshot`.
 
-When the date changes:
+### `PersistedSnapshot`
 
-- Today's log is reset.
-- Lifetime collection is preserved.
-- The session starts in `stopped`.
+```ts
+export interface PersistedSnapshot {
+  schemaVersion: 1;
+  session: {
+    today: string;            // YYYY-MM-DD
+    satiety: number;
+    meatDeck: string[];
+    lastServedMeatId: string | null;
+  };
+  todayLog: MeatLogEntry[];
+  lifetime: {
+    perMeatEncounter: Record<string, number>;
+    eaten: number;
+  };
+  lastLaunchDate: string;     // YYYY-MM-DD
+}
+```
+
+`MeatLogEntry` is defined above (Meat log §). It is referenced here, not redefined.
+
+### Volatile fields (NOT persisted)
+
+`status`, `startedAt`, `lastTickAt`, `nextArrivalAt`, `currentMeatId`. The session always starts in `stopped` after activation; `nextArrivalAt` is therefore never restored, which avoids a stale-arrival firing immediately after PC sleep / restart (ADR-0007 §D8).
+
+### Load on activate
+
+```text
+const snap = repository.load();              // initial snapshot on parse / shape error
+if (snap.lastLaunchDate !== today()) {        // date rollover
+  snap.todayLog = [];
+  snap.session.satiety = 0;
+  snap.session.today = today();
+}
+// snap.session is wired into the session service as initial state.
+```
+
+### Save timing
+
+Every `onStateChange` and `onMeatLogged` event triggers `repository.save(...)` as fire-and-forget. The returned `Thenable<void>` from `globalState.update` is not awaited; write failures surface in the Output channel per VS Code conventions (ADR-0007 §D4).
+
+### Date rollover
+
+`todayLog`, `session.satiety`, and `session.today` reset **on the next activate** after the date changes between launches. The `lifetime` collection is preserved across rollovers. In-tick 24:00 detection is out of scope for v0.1 (ADR-0007 §D6).
+
+### Fallback on corruption
+
+- JSON parse error or shape violation → full reset to the initial snapshot, plus `console.warn`.
+- Unknown `meatId` in `meatDeck` → drop the entry; an empty deck recovers via the next `drawNext` refill.
+- Unknown `meatId` in `todayLog` → keep the entry (past-log meaning is preserved). Display fallback for unknown meats is the UI's concern.
+
+## Today log and satiety
+
+Behavior split between `SatietyService` (pure functions) and `TodayLogService` (stateful aggregator). Decision rationale and alternatives are recorded in [ADR-0008](../adr/0008-today-log-and-satiety.md).
+
+### `SatietyService`
+
+```ts
+export function applyEat(
+  currentSatiety: number,
+  meat: Meat,
+  maxSatiety: number,
+): { nextSatiety: number; isFull: boolean };
+```
+
+- `nextSatiety = currentSatiety + meat.satiety`.
+- `isFull = nextSatiety >= maxSatiety` ([ADR-0003 §3](../adr/0003-session-and-timer-design.md)).
+- No internal state. Defensive guards for non-finite / negative inputs are not added; the boundary `sanitize*` helpers in `src/constants/configuration.ts` are the single sanitization point ([ADR-0003 §7](../adr/0003-session-and-timer-design.md)).
+- The decision to act on `isFull === true` (transition to `'full'` vs auto-stop to `'stopped'`) is owned by the session layer per the `autoStopWhenFull` setting; specifics are recorded separately (see Settings § below).
+
+### `TodayLogService`
+
+State held by the service:
+
+```ts
+{
+  todayLog: MeatLogEntry[];
+  lifetime: {
+    perMeatEncounter: Record<string, number>;
+    eaten: number;
+  };
+}
+```
+
+API:
+
+- `recordEntry(entry: MeatLogEntry): void` — appends to `todayLog`. If `entry.action === 'eaten'`, also increments `lifetime.eaten`. The two side effects are intentionally fused into one API to preserve atomicity ([ADR-0008 §D8](../adr/0008-today-log-and-satiety.md)).
+- `recordEncounter(meatId: string): void` — increments `lifetime.perMeatEncounter[meatId]`. Called when a meat is served, regardless of `enableNotifications` ([ADR-0008 §D7](../adr/0008-today-log-and-satiety.md)).
+- `resetToday(): void` — clears `todayLog` only; `lifetime` is preserved. Used both by the date rollover wiring and by the `churrasco.resetToday` command.
+- `get todayLog(): readonly MeatLogEntry[]` and `get lifetime(): Readonly<...>` — read access.
+- `onChange: Event<void>` — single notification point for persistence and UI subscribers.
+
+The constructor takes `initialState: { todayLog, lifetime }` derived from `PersistedSnapshot` after the date-rollover transformation. The service itself does not detect date changes ([ADR-0008 §D10](../adr/0008-today-log-and-satiety.md)).
+
+### Wiring
+
+`extension.ts` is the only module that knows about both services. It bridges:
+
+- `ChurrascoSessionService.onMeatLogged` → `TodayLogService.recordEntry`
+- `ChurrascoSessionService.onMeatServed` → `TodayLogService.recordEncounter` (where `onMeatServed: Event<{ meatId: string; servedAt: string }>` is fired by `ChurrascoSessionService.tick()` at the `meatArrived` transition edge)
+- `ChurrascoSessionService.onStateChange` ∪ `TodayLogService.onChange` → pull current state from both services, build a `PersistedSnapshot`, call `repository.save(snapshot)` fire-and-forget ([ADR-0008 §D9](../adr/0008-today-log-and-satiety.md)).
+
+The reverse direction (`TodayLogService` → `ChurrascoSessionService`) is not wired. `ChurrascoSessionService` does not import `TodayLogService`.
 
 ## Commands
 
@@ -84,8 +179,8 @@ When the date changes:
 - Set `status` to `stopped`.
 - Set `currentMeatId` to `null`.
 - Set `nextArrivalAt` to `null`.
-- Show the end-of-session summary.
-- A `stopped → stopped` invocation is suppressed by the shallow-equal guard so it does not re-emit the summary ([ADR-0003 §5](../adr/0003-session-and-timer-design.md)).
+- The end-of-session summary is shown by `EndOfSessionSummaryController` on the `(running | paused | meatArrived | full) → stopped` transition edge ([ADR-0009 §D2](../adr/0009-today-summary-and-auto-stop.md)). The service itself does not invoke `window.*`.
+- A `stopped → stopped` invocation is suppressed by the shallow-equal guard so the summary edge does not fire ([ADR-0003 §5](../adr/0003-session-and-timer-design.md)).
 
 #### `churrasco.pauseSession`
 
@@ -96,9 +191,11 @@ When the date changes:
 
 - Run only if there is a `currentMeatId`.
 - Append an `eaten` entry to the meat log.
-- Add `meat.satiety` to `satiety`.
+- Add `meat.satiety` to `satiety` via [`SatietyService.applyEat`](../adr/0008-today-log-and-satiety.md).
 - Set `currentMeatId` to `null`.
-- If `satiety >= maxSatiety`, set `status` to `full`.
+- If `isFull` (`satiety >= maxSatiety`):
+  - When `autoStopWhenFull` is `true`: transition directly to `'stopped'` (skipping `'full'`), set `nextArrivalAt` to `null`, and stop the timer ([ADR-0009 §D6](../adr/0009-today-summary-and-auto-stop.md)). The summary fires via the same edge as a manual stop.
+  - When `autoStopWhenFull` is `false`: set `status` to `'full'` and stop the timer; the user remains in `'full'` until they manually invoke `stopSession` ([ADR-0009 §D7](../adr/0009-today-summary-and-auto-stop.md)).
 - Otherwise set `nextArrivalAt` to `now + intervalMinutes`.
 
 #### `churrasco.passCurrentMeat`
@@ -111,8 +208,14 @@ When the date changes:
 
 #### `churrasco.showTodayLog`
 
-- Show today's log via an information message or Quick Pick.
-- v0.1 does not use a Webview.
+- Render today's log via the pure `formatTodayLog` formatter and display it through `window.showInformationMessage` ([ADR-0009 §D8](../adr/0009-today-summary-and-auto-stop.md)).
+- The displayed content follows the example in [`docs/spec/ui.md` §Today's meat log](ui.md). v0.1 does not use a Webview or Quick Pick for this command.
+
+#### `churrasco.resetToday`
+
+- Show a confirmation modal (`window.showWarningMessage(..., { modal: true }, 'Reset')`) before any state mutation ([ADR-0009 §D9](../adr/0009-today-summary-and-auto-stop.md)).
+- On `Reset`: invoke `TodayLogService.resetToday()`, which clears `todayLog` only. `lifetime` is preserved ([ADR-0008 §D4](../adr/0008-today-log-and-satiety.md)).
+- On `Cancel` or modal dismissal: no-op.
 
 ## Settings
 
@@ -154,7 +257,11 @@ Maximum value of satiety. Default `100`.
 
 ### `churrasco.autoStopWhenFull`
 
-When `true`, end the session automatically once `satiety >= maxSatiety`.
+When `true`, the session transitions directly from `'running'` to `'stopped'` (skipping `'full'`) the moment `satiety >= maxSatiety` is reached during an `eat()` call. The end-of-session summary fires through the standard `(running | paused | meatArrived | full) → stopped` edge ([ADR-0009 §D2 / §D6](../adr/0009-today-summary-and-auto-stop.md)).
+
+When `false`, the session enters `'full'` and waits for the user to invoke `stopSession` manually ([ADR-0009 §D7](../adr/0009-today-summary-and-auto-stop.md)). The `'full'` state is therefore reachable only under `autoStopWhenFull=false`.
+
+Sanitized via `sanitizeBoolean` in `src/constants/configuration.ts`. Read as a snapshot inside `ChurrascoSessionService.eat()`; not wired to `onDidChangeConfiguration`.
 
 ### `churrasco.locale`
 

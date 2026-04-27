@@ -35,12 +35,14 @@ v0.1 is considered done when all of the following hold.
 [Satiety]
 - Eating increases satiety.
 - Passing does not increase satiety.
-- Reaching `maxSatiety` puts the session in the `full` state.
+- Reaching `maxSatiety` ends the session: with `autoStopWhenFull=true` the session transitions directly to `stopped`; with `autoStopWhenFull=false` it enters `full` and waits for a manual stop.
+- An end-of-session summary is shown on the `(running | paused | meatArrived | full) → stopped` transition edge.
 
 [Settings]
 - `intervalMinutes` can be changed.
 - Setting `enableNotifications` to `false` suppresses notifications.
 - Setting `showStatusBar` to `false` hides the status bar item.
+- Setting `autoStopWhenFull` to `false` keeps the session in `full` instead of auto-stopping.
 
 [Quality]
 - `pnpm compile` succeeds.

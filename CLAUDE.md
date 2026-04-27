@@ -63,40 +63,44 @@ pnpm ci
 
 ## Architecture
 
-現状（M0〜M4 完了）の `src/` 構成:
+現状（M0〜M5 完了）の `src/` 構成:
 
 ```
 src/
-  extension.ts                       — activate / deactivate、DI ルート
+  extension.ts                       — activate / deactivate、DI ルート + 永続化 wiring
   constants/
     meats.ts                         — DEFAULT_MEATS（12 種）
     commands.ts                      — COMMAND_IDS
-    configuration.ts                 — CONFIGURATION_KEYS、sanitize* 関数
+    configuration.ts                 — CONFIGURATION_KEYS、sanitize* 関数、デフォルト値
   domain/
     meat.ts                          — Meat / MeatCategory / MeatRarity 型
     session.ts                       — ChurrascoSessionState、SessionStatus 型
     log.ts                           — MeatLogEntry、MeatLogAction 型
   services/
-    ChurrascoSessionService.ts       — セッション・タイマー・eat/pass/cooled
+    ChurrascoSessionService.ts       — セッション・タイマー・eat/pass/cooled・autoStop 分岐・onMeatServed
     MeatDeckService.ts               — drawNext 関数（シャッフル・ドロー・補充）
+    SatietyService.ts                — applyEat 純関数（nextSatiety + isFull 判定）
+    TodayLogService.ts               — todayLog/lifetime 集計、recordEntry/recordEncounter/resetToday
+  storage/
+    ChurrascoStateRepository.ts      — ExtensionContext.globalState ラッパー（load/save/reset）
+    PersistedSnapshot.ts             — PersistedSnapshot 型 + createInitialSnapshot
+    dateRollover.ts                  — applyDateRollover 純関数
   ui/
     formatStatusBar.ts               — 純関数: state → 表示文字列
+    formatTodayLog.ts                — 純関数: todayLog → information message テキスト
+    formatEndOfSessionSummary.ts     — 純関数: 終了サマリーテキスト
     StatusBarController.ts           — 1Hz countdown 描画
     NotificationController.ts        — 肉到着通知・edge 検出
     QuickPickController.ts           — 動的メニュー
+    EndOfSessionSummaryController.ts — stopped edge でサマリー通知
   test/
     extension.test.ts                — @vscode/test-cli 統合テスト
 ```
 
-M5〜M6 で追加予定の構成（`docs/roadmap.md` 参照）:
+M6 で追加予定の構成（`docs/roadmap.md` 参照）:
 
 ```
 src/
-  services/
-    SatietyService.ts                — 満腹度計算（M5）
-    TodayLogService.ts               — 今日のログ集計（M5）
-  storage/
-    ChurrascoStateRepository.ts      — ExtensionContext.globalState ラッパー（M5）
   views/
     ChurrascoTreeDataProvider.ts     — サイドバー Tree View（M6）
     ChurrascoTreeItem.ts             — Tree View アイテム（M6）

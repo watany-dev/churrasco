@@ -37,9 +37,17 @@ function createService(
     intervalGetter: () => number;
     maxSatiety: number;
     maxSatietyGetter: () => number;
+    autoStopWhenFull: boolean;
+    autoStopWhenFullGetter: () => boolean;
     rng: () => number;
     tickIntervalMs: number;
     generateLogId: () => string;
+    initialState: {
+      satiety: number;
+      today: string;
+      meatDeck: string[];
+      lastServedMeatId: string | null;
+    };
   }> = {},
 ): {
   service: ChurrascoSessionService;
@@ -48,13 +56,16 @@ function createService(
 } {
   const intervalMinutes = overrides.intervalMinutes ?? 10;
   const maxSatiety = overrides.maxSatiety ?? HUGE_MAX_SATIETY;
+  const autoStopWhenFull = overrides.autoStopWhenFull ?? true;
   const service = new ChurrascoSessionService({
     meats: DEFAULT_MEATS,
     getIntervalMinutes: overrides.intervalGetter ?? (() => intervalMinutes),
     getMaxSatiety: overrides.maxSatietyGetter ?? (() => maxSatiety),
+    getAutoStopWhenFull: overrides.autoStopWhenFullGetter ?? (() => autoStopWhenFull),
     tickIntervalMs: overrides.tickIntervalMs ?? 1000,
     ...(overrides.rng ? { rng: overrides.rng } : {}),
     ...(overrides.generateLogId ? { generateLogId: overrides.generateLogId } : {}),
+    ...(overrides.initialState ? { initialState: overrides.initialState } : {}),
   });
   const events: ChurrascoSessionState[] = [];
   service.onStateChange((state) => events.push({ ...state }));
@@ -359,14 +370,69 @@ describe('ChurrascoSessionService', () => {
       service.dispose();
     });
 
-    it('transitions to full and clears nextArrivalAt when satiety reaches max', () => {
-      const { service } = createService({ intervalMinutes: 0.1, maxSatiety: 1 });
+    it('transitions directly to stopped when satiety reaches max and autoStopWhenFull=true', () => {
+      const { service } = createService({
+        intervalMinutes: 0.1,
+        maxSatiety: 1,
+        autoStopWhenFull: true,
+      });
+      service.start();
+      vi.advanceTimersByTime(7_000);
+      service.eat();
+      expect(service.state.status).toBe('stopped');
+      expect(service.state.currentMeatId).toBeNull();
+      expect(service.state.nextArrivalAt).toBeNull();
+      service.dispose();
+    });
+
+    it('transitions to full when satiety reaches max and autoStopWhenFull=false', () => {
+      const { service } = createService({
+        intervalMinutes: 0.1,
+        maxSatiety: 1,
+        autoStopWhenFull: false,
+      });
       service.start();
       vi.advanceTimersByTime(7_000);
       service.eat();
       expect(service.state.status).toBe('full');
       expect(service.state.currentMeatId).toBeNull();
       expect(service.state.nextArrivalAt).toBeNull();
+      service.dispose();
+    });
+
+    it('stops the timer when autoStopWhenFull=false transitions to full', () => {
+      const { service, events } = createService({
+        intervalMinutes: 0.1,
+        maxSatiety: 1,
+        autoStopWhenFull: false,
+      });
+      service.start();
+      vi.advanceTimersByTime(7_000);
+      service.eat();
+      const eventsBefore = events.length;
+      vi.advanceTimersByTime(60_000);
+      expect(events.length).toBe(eventsBefore);
+      service.dispose();
+    });
+
+    it('re-evaluates getAutoStopWhenFull on each eat call', () => {
+      let autoStop = true;
+      const { service } = createService({
+        intervalMinutes: 0.1,
+        maxSatiety: 1,
+        autoStopWhenFullGetter: () => autoStop,
+      });
+      service.start();
+      vi.advanceTimersByTime(7_000);
+      // First eat with autoStop=true → stopped
+      service.eat();
+      expect(service.state.status).toBe('stopped');
+      // Now flip autoStop=false and re-run
+      autoStop = false;
+      service.start();
+      vi.advanceTimersByTime(7_000);
+      service.eat();
+      expect(service.state.status).toBe('full');
       service.dispose();
     });
 
@@ -388,6 +454,7 @@ describe('ChurrascoSessionService', () => {
       const { service } = createService({
         intervalMinutes: 0.1,
         maxSatietyGetter: () => max,
+        autoStopWhenFull: false,
       });
       service.start();
       vi.advanceTimersByTime(7_000);
@@ -452,6 +519,61 @@ describe('ChurrascoSessionService', () => {
       service.dispose();
       service.eat();
       expect(logs).toHaveLength(0);
+    });
+  });
+
+  describe('onMeatServed', () => {
+    it('fires once at the meatArrived edge with the served meatId and ISO timestamp', () => {
+      const { service } = createService({ intervalMinutes: 0.1 });
+      const events: { meatId: string; servedAt: string }[] = [];
+      service.onMeatServed((event) => events.push(event));
+      service.start();
+      vi.advanceTimersByTime(7_000);
+      expect(events).toHaveLength(1);
+      expect(events[0]?.meatId).toBe(service.state.currentMeatId);
+      expect(events[0]?.servedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+      service.dispose();
+    });
+
+    it('fires again on the cooled tick when a new meat replaces the previous one', () => {
+      const { service } = createService({ intervalMinutes: 0.1 });
+      const events: { meatId: string; servedAt: string }[] = [];
+      service.onMeatServed((event) => events.push(event));
+      service.start();
+      vi.advanceTimersByTime(7_000);
+      vi.advanceTimersByTime(7_000);
+      expect(events).toHaveLength(2);
+      expect(events[0]?.meatId).not.toBe(events[1]?.meatId);
+      service.dispose();
+    });
+
+    it('does not fire after dispose', () => {
+      const { service } = createService({ intervalMinutes: 0.1 });
+      const events: unknown[] = [];
+      service.onMeatServed(() => events.push(1));
+      service.start();
+      service.dispose();
+      vi.advanceTimersByTime(60_000);
+      expect(events).toHaveLength(0);
+    });
+  });
+
+  describe('initialState', () => {
+    it('seeds satiety / today / meatDeck / lastServedMeatId from initialState', () => {
+      const { service } = createService({
+        initialState: {
+          satiety: 30,
+          today: '2026-04-26',
+          meatDeck: ['picanha', 'alcatra'],
+          lastServedMeatId: 'fraldinha',
+        },
+      });
+      expect(service.state.satiety).toBe(30);
+      expect(service.state.today).toBe('2026-04-26');
+      expect(service.state.meatDeck).toEqual(['picanha', 'alcatra']);
+      expect(service.state.lastServedMeatId).toBe('fraldinha');
+      expect(service.state.status).toBe('stopped');
+      service.dispose();
     });
   });
 });

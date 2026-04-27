@@ -123,10 +123,16 @@ churrasco-break/
       TodayLogService.test.ts
     storage/
       ChurrascoStateRepository.ts
+      PersistedSnapshot.ts
+      dateRollover.ts
     ui/
       StatusBarController.ts
       NotificationController.ts
       QuickPickController.ts
+      EndOfSessionSummaryController.ts
+      formatStatusBar.ts
+      formatTodayLog.ts
+      formatEndOfSessionSummary.ts
     views/
       ChurrascoTreeDataProvider.ts
       ChurrascoTreeItem.ts
@@ -173,7 +179,7 @@ Does **not**:
 - Handle eat.
 - Handle pass.
 
-Implements `vscode.Disposable` so it can be pushed into `ExtensionContext.subscriptions` to ensure the timer and `EventEmitter` are torn down on `deactivate`. Exposes `onStateChange: Event<ChurrascoSessionState>` for UI controllers (M3+) to subscribe to. See [ADR-0003](../adr/0003-session-and-timer-design.md) for the command boundary semantics, idempotency guard, and configuration handling.
+Implements `vscode.Disposable` so it can be pushed into `ExtensionContext.subscriptions` to ensure the timer and `EventEmitter` are torn down on `deactivate`. Exposes three events for subscribers: `onStateChange: Event<ChurrascoSessionState>` (consumed by `StatusBarController`, `NotificationController`, `EndOfSessionSummaryController`, and the persistence wiring in `extension.ts`), `onMeatLogged: Event<MeatLogEntry>` (forwarded to `TodayLogService.recordEntry`), and `onMeatServed: Event<{ meatId; servedAt }>` (forwarded to `TodayLogService.recordEncounter` at the `meatArrived` transition edge). Accepts an optional constructor `initialState` so the persisted snapshot's `satiety` / `today` / `meatDeck` / `lastServedMeatId` can be seeded at activation. See [ADR-0003](../adr/0003-session-and-timer-design.md) for the command boundary semantics, idempotency guard, and configuration handling, and [ADR-0008](../adr/0008-today-log-and-satiety.md) / [ADR-0009](../adr/0009-today-summary-and-auto-stop.md) for the M5 events and `autoStopWhenFull` branch.
 
 ### `MeatDeckService`
 
@@ -181,6 +187,33 @@ Implements `vscode.Disposable` so it can be pushed into `ExtensionContext.subscr
 - Draw the next meat.
 - Refill the deck.
 - Avoid back-to-back duplicates across refills.
+
+### `SatietyService`
+
+- Compute the next satiety value after eating a meat.
+- Return whether the new value reaches `maxSatiety`.
+
+Pure-function module (no internal state). The session layer owns the current satiety value and consumes only the computed result. Boundary `sanitize*` helpers in `src/constants/configuration.ts` are the single sanitization point; `applyEat` carries no defensive guards. See [ADR-0008](../adr/0008-today-log-and-satiety.md).
+
+### `TodayLogService`
+
+- Hold today's `MeatLogEntry[]`.
+- Hold lifetime aggregates: `perMeatEncounter` and `eaten` counters.
+- Append entries (`recordEntry`) and increment encounters (`recordEncounter`).
+- Reset today's log on date rollover or via the `churrasco.resetToday` command.
+- Expose `onChange: Event<void>` for persistence and UI subscribers.
+
+Stateful service constructed with `initialState` from `PersistedSnapshot`. Subscribes (via `extension.ts` wiring) to `ChurrascoSessionService.onMeatLogged` and `ChurrascoSessionService.onMeatServed`. Does not import `ChurrascoSessionService` directly. See [ADR-0008](../adr/0008-today-log-and-satiety.md).
+
+### `ChurrascoStateRepository`
+
+- Wrap `ExtensionContext.globalState` behind a `load` / `save` / `reset` API.
+- Read and write a single `PersistedSnapshot` under the canonical storage key.
+- Reject mismatched `schemaVersion`, malformed shapes, and non-object payloads, falling back to the initial snapshot with a `console.warn` (no modal).
+- Sanitize unknown `meatId` values out of `meatDeck` / `lastServedMeatId` while preserving past entries in `todayLog`.
+- The `applyDateRollover` pure helper, applied by `extension.ts` immediately after `load()`, resets `todayLog` / `session.satiety` / `session.today` while preserving `lifetime` and the meat deck across launches.
+
+See [ADR-0007](../adr/0007-persistence-layer.md).
 
 ### `StatusBarController`
 
@@ -193,6 +226,13 @@ Implements `vscode.Disposable` so it can be pushed into `ExtensionContext.subscr
 - Show the meat-arrival notification.
 - Forward the user's choice to the appropriate command or service.
 - No-op when notifications are disabled.
+
+### `EndOfSessionSummaryController`
+
+- Subscribe to `ChurrascoSessionService.onStateChange`.
+- On the `(running | paused | meatArrived | full) → stopped` transition edge, pull `todayLog` / `lifetime` from `TodayLogService` and `satiety` from the session, format via the pure `formatEndOfSessionSummary`, and display through a non-modal `window.showInformationMessage`.
+
+Independent from `NotificationController` (different edge, different responsibility). See [ADR-0009](../adr/0009-today-summary-and-auto-stop.md).
 
 ### `ChurrascoTreeDataProvider`
 

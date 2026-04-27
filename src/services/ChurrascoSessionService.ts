@@ -3,15 +3,28 @@ import type { MeatLogEntry } from '../domain/log';
 import type { Meat } from '../domain/meat';
 import { type ChurrascoSessionState, initialSessionState } from '../domain/session';
 import { drawNext } from './MeatDeckService';
+import { applyEat } from './SatietyService';
 
 interface ChurrascoSessionServiceOptions {
   meats: Meat[];
   getIntervalMinutes: () => number;
   getMaxSatiety: () => number;
+  getAutoStopWhenFull?: () => boolean;
+  initialState?: {
+    satiety: number;
+    today: string;
+    meatDeck: string[];
+    lastServedMeatId: string | null;
+  };
   tickIntervalMs?: number;
   rng?: () => number;
   generateLogId?: () => string;
   now?: () => number;
+}
+
+interface MeatServedEvent {
+  meatId: string;
+  servedAt: string;
 }
 
 const DEFAULT_TICK_INTERVAL_MS = 1000;
@@ -20,23 +33,35 @@ export class ChurrascoSessionService implements Disposable {
   private readonly meats: Meat[];
   private readonly getIntervalMinutes: () => number;
   private readonly getMaxSatiety: () => number;
+  private readonly getAutoStopWhenFull: () => boolean;
   private readonly tickIntervalMs: number;
   private readonly rng: (() => number) | undefined;
   private readonly generateLogId: () => string;
   private readonly now: () => number;
   private readonly stateEmitter = new EventEmitter<ChurrascoSessionState>();
   private readonly logEmitter = new EventEmitter<MeatLogEntry>();
-  private currentState: ChurrascoSessionState = initialSessionState;
+  private readonly meatServedEmitter = new EventEmitter<MeatServedEvent>();
+  private currentState: ChurrascoSessionState;
   private tickHandle: ReturnType<typeof setInterval> | null = null;
 
   constructor(options: ChurrascoSessionServiceOptions) {
     this.meats = options.meats;
     this.getIntervalMinutes = options.getIntervalMinutes;
     this.getMaxSatiety = options.getMaxSatiety;
+    this.getAutoStopWhenFull = options.getAutoStopWhenFull ?? (() => true);
     this.tickIntervalMs = options.tickIntervalMs ?? DEFAULT_TICK_INTERVAL_MS;
     this.rng = options.rng;
     this.generateLogId = options.generateLogId ?? (() => crypto.randomUUID());
     this.now = options.now ?? Date.now;
+    this.currentState = options.initialState
+      ? {
+          ...initialSessionState,
+          satiety: options.initialState.satiety,
+          today: options.initialState.today,
+          meatDeck: options.initialState.meatDeck,
+          lastServedMeatId: options.initialState.lastServedMeatId,
+        }
+      : initialSessionState;
   }
 
   get state(): Readonly<ChurrascoSessionState> {
@@ -49,6 +74,10 @@ export class ChurrascoSessionService implements Disposable {
 
   get onMeatLogged(): Event<MeatLogEntry> {
     return this.logEmitter.event;
+  }
+
+  get onMeatServed(): Event<MeatServedEvent> {
+    return this.meatServedEmitter.event;
   }
 
   start(): void {
@@ -96,16 +125,27 @@ export class ChurrascoSessionService implements Disposable {
       return;
     }
     const now = this.now();
-    const newSatiety = this.currentState.satiety + meat.satiety;
-    const isFull = newSatiety >= this.getMaxSatiety();
+    const { nextSatiety, isFull } = applyEat(this.currentState.satiety, meat, this.getMaxSatiety());
     const intervalMs = this.getIntervalMinutes() * 60_000;
-    this.setState({
-      ...this.currentState,
-      status: isFull ? 'full' : 'running',
-      currentMeatId: null,
-      nextArrivalAt: isFull ? null : new Date(now + intervalMs).toISOString(),
-      satiety: newSatiety,
-    });
+    if (isFull) {
+      const autoStop = this.getAutoStopWhenFull();
+      this.setState({
+        ...this.currentState,
+        status: autoStop ? 'stopped' : 'full',
+        currentMeatId: null,
+        nextArrivalAt: null,
+        satiety: nextSatiety,
+      });
+      this.clearTimer();
+    } else {
+      this.setState({
+        ...this.currentState,
+        status: 'running',
+        currentMeatId: null,
+        nextArrivalAt: new Date(now + intervalMs).toISOString(),
+        satiety: nextSatiety,
+      });
+    }
     this.logEmitter.fire({
       id: this.generateLogId(),
       meatId: meat.id,
@@ -141,6 +181,7 @@ export class ChurrascoSessionService implements Disposable {
     this.clearTimer();
     this.stateEmitter.dispose();
     this.logEmitter.dispose();
+    this.meatServedEmitter.dispose();
   }
 
   private ensureTimer(): void {
@@ -176,6 +217,7 @@ export class ChurrascoSessionService implements Disposable {
       this.rng,
     );
     const intervalMs = this.getIntervalMinutes() * 60_000;
+    const servedAt = new Date(now).toISOString();
     this.setState({
       ...this.currentState,
       status: 'meatArrived',
@@ -183,14 +225,15 @@ export class ChurrascoSessionService implements Disposable {
       meatDeck: result.state.meatDeck,
       lastServedMeatId: result.state.lastServedMeatId,
       nextArrivalAt: new Date(now + intervalMs).toISOString(),
-      lastTickAt: new Date(now).toISOString(),
+      lastTickAt: servedAt,
     });
+    this.meatServedEmitter.fire({ meatId: result.meat.id, servedAt });
     if (status === 'meatArrived' && previousMeatId !== null) {
       this.logEmitter.fire({
         id: this.generateLogId(),
         meatId: previousMeatId,
         action: 'cooled',
-        createdAt: new Date(now).toISOString(),
+        createdAt: servedAt,
         satietyDelta: 0,
       });
     }

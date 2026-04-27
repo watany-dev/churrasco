@@ -5,4 +5,6 @@ export const COMMAND_IDS = {
   openMenu: 'churrasco.openMenu',
   eatCurrentMeat: 'churrasco.eatCurrentMeat',
   passCurrentMeat: 'churrasco.passCurrentMeat',
+  showTodayLog: 'churrasco.showTodayLog',
+  resetToday: 'churrasco.resetToday',
 } as const;

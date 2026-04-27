@@ -71,18 +71,22 @@ describe('QuickPickController', () => {
   });
 
   describe('buildItems', () => {
-    it('shows only Start service when stopped', () => {
+    it('shows Show today log + Start service when stopped', () => {
       const { controller, service } = createController();
       const items = controller.buildItems(withState({ status: 'stopped' }));
-      expect(items.map((i) => i.command)).toEqual([COMMAND_IDS.startSession]);
+      expect(items.map((i) => i.command)).toEqual([
+        COMMAND_IDS.showTodayLog,
+        COMMAND_IDS.startSession,
+      ]);
       service.dispose();
       controller.dispose();
     });
 
-    it('shows Pause and End for the day when running', () => {
+    it('shows Show today log + Pause + End for the day when running', () => {
       const { controller, service } = createController();
       const items = controller.buildItems(withState({ status: 'running' }));
       expect(items.map((i) => i.command)).toEqual([
+        COMMAND_IDS.showTodayLog,
         COMMAND_IDS.pauseSession,
         COMMAND_IDS.stopSession,
       ]);
@@ -90,10 +94,11 @@ describe('QuickPickController', () => {
       controller.dispose();
     });
 
-    it('shows Start service and End for the day when paused', () => {
+    it('shows Show today log + Start service + End for the day when paused', () => {
       const { controller, service } = createController();
       const items = controller.buildItems(withState({ status: 'paused' }));
       expect(items.map((i) => i.command)).toEqual([
+        COMMAND_IDS.showTodayLog,
         COMMAND_IDS.startSession,
         COMMAND_IDS.stopSession,
       ]);
@@ -101,7 +106,7 @@ describe('QuickPickController', () => {
       controller.dispose();
     });
 
-    it('shows Eat / Pass / End for the day when meat has arrived', () => {
+    it('shows Eat / Pass / Show today log / End for the day when meat has arrived', () => {
       const { controller, service } = createController();
       const items = controller.buildItems(
         withState({ status: 'meatArrived', currentMeatId: 'picanha' }),
@@ -109,16 +114,20 @@ describe('QuickPickController', () => {
       expect(items.map((i) => i.command)).toEqual([
         COMMAND_IDS.eatCurrentMeat,
         COMMAND_IDS.passCurrentMeat,
+        COMMAND_IDS.showTodayLog,
         COMMAND_IDS.stopSession,
       ]);
       service.dispose();
       controller.dispose();
     });
 
-    it('shows only End for the day when full', () => {
+    it('shows Show today log + End for the day when full', () => {
       const { controller, service } = createController();
       const items = controller.buildItems(withState({ status: 'full' }));
-      expect(items.map((i) => i.command)).toEqual([COMMAND_IDS.stopSession]);
+      expect(items.map((i) => i.command)).toEqual([
+        COMMAND_IDS.showTodayLog,
+        COMMAND_IDS.stopSession,
+      ]);
       service.dispose();
       controller.dispose();
     });
@@ -131,9 +140,9 @@ describe('QuickPickController', () => {
         withState({ status: 'meatArrived', currentMeatId: 'picanha' }),
       );
       const firstChar = (label: string): string => [...label][0] ?? '';
-      expect(stopped.map((i) => firstChar(i.label))).toEqual(['🔥']);
-      expect(running.map((i) => firstChar(i.label))).toEqual(['⏸', '🛑']);
-      expect(arrived.map((i) => firstChar(i.label))).toEqual(['🍖', '🙅', '🛑']);
+      expect(stopped.map((i) => firstChar(i.label))).toEqual(['📋', '🔥']);
+      expect(running.map((i) => firstChar(i.label))).toEqual(['📋', '⏸', '🛑']);
+      expect(arrived.map((i) => firstChar(i.label))).toEqual(['🍖', '🙅', '📋', '🛑']);
       service.dispose();
       controller.dispose();
     });
@@ -150,7 +159,10 @@ describe('QuickPickController', () => {
       const call = showQuickPickMock.mock.calls[0] ?? [];
       const items = (call[0] ?? []) as { command: string }[];
       const options = call[1] as { placeHolder: string } | undefined;
-      expect(items.map((i) => i.command)).toEqual([COMMAND_IDS.startSession]);
+      expect(items.map((i) => i.command)).toEqual([
+        COMMAND_IDS.showTodayLog,
+        COMMAND_IDS.startSession,
+      ]);
       expect(options).toEqual({ placeHolder: 'Churrasco Break' });
 
       service.dispose();
