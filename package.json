@@ -10,6 +10,11 @@
     "type": "git",
     "url": "https://github.com/watany-dev/churrasco.git"
   },
+  "bugs": {
+    "url": "https://github.com/watany-dev/churrasco/issues"
+  },
+  "homepage": "https://github.com/watany-dev/churrasco#readme",
+  "keywords": ["pomodoro", "timer", "break", "churrasco", "rhythm"],
   "engines": {
     "vscode": "^1.90.0",
     "node": ">=24"
