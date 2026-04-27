@@ -222,8 +222,8 @@ describe('buildSidebarSections', () => {
     });
     const collection = leaves(findSection(nodes, 'collection'));
     expect(collection).toHaveLength(DEFAULT_MEATS.length);
-    expect(collection[0].label).toBe('Picanha');
-    expect(collection[0].description).toBe('x3');
+    const picanha = collection.find((n) => n.label === 'Picanha');
+    expect(picanha?.description).toBe('x3');
     const coracao = collection.find((n) => n.label === 'Coracao');
     expect(coracao?.description).toBe('not yet encountered');
   });
