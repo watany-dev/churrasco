@@ -36,21 +36,63 @@ export interface MeatLogEntry {
 
 ## Persistence
 
-v0.1 uses `ExtensionContext.globalState`.
+v0.1 uses `ExtensionContext.globalState` as the single backing store. Decision rationale and alternatives are recorded in [ADR-0007](../adr/0007-persistence-layer.md).
 
-What we persist:
+### Storage key
 
-- Session state.
-- Today's meat log.
-- Lifetime per-meat encounter count.
-- Lifetime eaten count.
-- Last launch date.
+`churrasco.state.v1` — a single JSON-serialized `PersistedSnapshot`.
 
-When the date changes:
+### `PersistedSnapshot`
 
-- Today's log is reset.
-- Lifetime collection is preserved.
-- The session starts in `stopped`.
+```ts
+export interface PersistedSnapshot {
+  schemaVersion: 1;
+  session: {
+    today: string;            // YYYY-MM-DD
+    satiety: number;
+    meatDeck: string[];
+    lastServedMeatId: string | null;
+  };
+  todayLog: MeatLogEntry[];
+  lifetime: {
+    perMeatEncounter: Record<string, number>;
+    eaten: number;
+  };
+  lastLaunchDate: string;     // YYYY-MM-DD
+}
+```
+
+`MeatLogEntry` is defined above (Meat log §). It is referenced here, not redefined.
+
+### Volatile fields (NOT persisted)
+
+`status`, `startedAt`, `lastTickAt`, `nextArrivalAt`, `currentMeatId`. The session always starts in `stopped` after activation; `nextArrivalAt` is therefore never restored, which avoids a stale-arrival firing immediately after PC sleep / restart (ADR-0007 §D8).
+
+### Load on activate
+
+```text
+const snap = repository.load();              // initial snapshot on parse / shape error
+if (snap.lastLaunchDate !== today()) {        // date rollover
+  snap.todayLog = [];
+  snap.session.satiety = 0;
+  snap.session.today = today();
+}
+// snap.session is wired into the session service as initial state.
+```
+
+### Save timing
+
+Every `onStateChange` and `onMeatLogged` event triggers `repository.save(...)` as fire-and-forget. The returned `Thenable<void>` from `globalState.update` is not awaited; write failures surface in the Output channel per VS Code conventions (ADR-0007 §D4).
+
+### Date rollover
+
+`todayLog`, `session.satiety`, and `session.today` reset **on the next activate** after the date changes between launches. The `lifetime` collection is preserved across rollovers. In-tick 24:00 detection is out of scope for v0.1 (ADR-0007 §D6).
+
+### Fallback on corruption
+
+- JSON parse error or shape violation → full reset to the initial snapshot, plus `console.warn`.
+- Unknown `meatId` in `meatDeck` → drop the entry; an empty deck recovers via the next `drawNext` refill.
+- Unknown `meatId` in `todayLog` → keep the entry (past-log meaning is preserved). Display fallback for unknown meats is the UI's concern.
 
 ## Commands
 
