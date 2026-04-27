@@ -98,6 +98,7 @@ function createService(intervalMinutes = 10): ChurrascoSessionService {
   return new ChurrascoSessionService({
     meats: DEFAULT_MEATS,
     getIntervalMinutes: () => intervalMinutes,
+    getMaxSatiety: () => 100,
     tickIntervalMs: 1000,
   });
 }

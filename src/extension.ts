@@ -4,7 +4,9 @@ import {
   CONFIGURATION_KEYS,
   CONFIGURATION_SECTION,
   DEFAULT_INTERVAL_MINUTES,
+  DEFAULT_MAX_SATIETY,
   sanitizeInterval,
+  sanitizeMaxSatiety,
 } from './constants/configuration';
 import { DEFAULT_MEATS } from './constants/meats';
 import { ChurrascoSessionService } from './services/ChurrascoSessionService';
@@ -19,6 +21,12 @@ export function activate(context: ExtensionContext): void {
         workspace
           .getConfiguration(CONFIGURATION_SECTION)
           .get<number>(CONFIGURATION_KEYS.intervalMinutes, DEFAULT_INTERVAL_MINUTES),
+      ),
+    getMaxSatiety: () =>
+      sanitizeMaxSatiety(
+        workspace
+          .getConfiguration(CONFIGURATION_SECTION)
+          .get<number>(CONFIGURATION_KEYS.maxSatiety, DEFAULT_MAX_SATIETY),
       ),
   });
   const statusBar = new StatusBarController({ service, meats: DEFAULT_MEATS });
