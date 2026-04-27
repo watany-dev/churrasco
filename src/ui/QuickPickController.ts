@@ -14,13 +14,13 @@ interface ChurrascoQuickPickItem {
 
 const PLACEHOLDER = 'Churrasco Break';
 
-const ITEM_LABELS: Record<keyof typeof COMMAND_IDS, string> = {
+const ITEM_LABELS: Partial<Record<keyof typeof COMMAND_IDS, string>> = {
   startSession: '🔥 Start service',
   pauseSession: '⏸ Pause',
   stopSession: '🛑 End for the day',
   eatCurrentMeat: '🍖 Eat the current meat',
   passCurrentMeat: '🙅 Pass the current meat',
-  openMenu: '',
+  showTodayLog: "📋 Show today's meat log",
 };
 
 export class QuickPickController implements Disposable {
@@ -43,6 +43,7 @@ export class QuickPickController implements Disposable {
     if (state.currentMeatId !== null) {
       items.push(this.item('eatCurrentMeat'), this.item('passCurrentMeat'));
     }
+    items.push(this.item('showTodayLog'));
     if (canStart(state.status)) {
       items.push(this.item('startSession'));
     }
@@ -58,7 +59,7 @@ export class QuickPickController implements Disposable {
   dispose(): void {}
 
   private item(key: keyof typeof COMMAND_IDS): ChurrascoQuickPickItem {
-    return { label: ITEM_LABELS[key], command: COMMAND_IDS[key] };
+    return { label: ITEM_LABELS[key] ?? '', command: COMMAND_IDS[key] };
   }
 }
 

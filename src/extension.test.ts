@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Disposable, ExtensionContext } from 'vscode';
+import type { Disposable, ExtensionContext, Memento } from 'vscode';
 
 const {
   registerCommandMock,
@@ -7,6 +7,7 @@ const {
   createStatusBarItemMock,
   onDidChangeConfigurationMock,
   showInformationMessageMock,
+  showWarningMessageMock,
   showQuickPickMock,
 } = vi.hoisted(() => ({
   registerCommandMock: vi.fn(),
@@ -14,6 +15,7 @@ const {
   createStatusBarItemMock: vi.fn(),
   onDidChangeConfigurationMock: vi.fn(),
   showInformationMessageMock: vi.fn(),
+  showWarningMessageMock: vi.fn(),
   showQuickPickMock: vi.fn(),
 }));
 
@@ -50,6 +52,7 @@ vi.mock('vscode', () => {
     window: {
       createStatusBarItem: createStatusBarItemMock,
       showInformationMessage: showInformationMessageMock,
+      showWarningMessage: showWarningMessageMock,
       showQuickPick: showQuickPickMock,
     },
   };
@@ -58,8 +61,31 @@ vi.mock('vscode', () => {
 import { COMMAND_IDS } from './constants/commands';
 import { activate, deactivate } from './extension';
 
+class FakeMemento implements Memento {
+  private store = new Map<string, unknown>();
+  keys(): readonly string[] {
+    return [...this.store.keys()];
+  }
+  get<T>(key: string): T | undefined;
+  get<T>(key: string, defaultValue: T): T;
+  get<T>(key: string, defaultValue?: T): T | undefined {
+    return (this.store.has(key) ? (this.store.get(key) as T) : defaultValue) as T | undefined;
+  }
+  update(key: string, value: unknown): Thenable<void> {
+    if (value === undefined) {
+      this.store.delete(key);
+    } else {
+      this.store.set(key, value);
+    }
+    return Promise.resolve();
+  }
+}
+
 function createContext(): ExtensionContext {
-  return { subscriptions: [] as Disposable[] } as unknown as ExtensionContext;
+  return {
+    subscriptions: [] as Disposable[],
+    globalState: new FakeMemento(),
+  } as unknown as ExtensionContext;
 }
 
 function createFakeStatusBarItem(): {
@@ -93,6 +119,7 @@ describe('activate', () => {
     onDidChangeConfigurationMock.mockReset();
     onDidChangeConfigurationMock.mockReturnValue({ dispose: vi.fn() });
     showInformationMessageMock.mockReset();
+    showWarningMessageMock.mockReset();
     showQuickPickMock.mockReset();
   });
 
@@ -100,7 +127,7 @@ describe('activate', () => {
     vi.clearAllMocks();
   });
 
-  it('registers every M4 command on activation', () => {
+  it('registers every command on activation including M5 showTodayLog and resetToday', () => {
     const context = createContext();
 
     activate(context);
@@ -114,17 +141,42 @@ describe('activate', () => {
         COMMAND_IDS.openMenu,
         COMMAND_IDS.eatCurrentMeat,
         COMMAND_IDS.passCurrentMeat,
+        COMMAND_IDS.showTodayLog,
+        COMMAND_IDS.resetToday,
       ]),
     );
-    expect(registerCommandMock).toHaveBeenCalledTimes(6);
+    expect(registerCommandMock).toHaveBeenCalledTimes(8);
   });
 
-  it('pushes the session service, every UI controller, and every command disposable into subscriptions', () => {
+  it('shows the today log via window.showInformationMessage when showTodayLog is invoked', () => {
     const context = createContext();
-
     activate(context);
+    const call = registerCommandMock.mock.calls.find((c) => c[0] === COMMAND_IDS.showTodayLog);
+    const handler = call?.[1] as (() => void) | undefined;
+    handler?.();
+    expect(showInformationMessageMock).toHaveBeenCalledTimes(1);
+    const message = showInformationMessageMock.mock.calls[0]?.[0];
+    expect(typeof message).toBe('string');
+    expect(message as string).toContain("🍖 Today's churrasco log");
+  });
 
-    expect(context.subscriptions).toHaveLength(10);
+  it('pushes services, controllers, wiring, and command disposables into subscriptions', () => {
+    const context = createContext();
+    activate(context);
+    // 6 services/controllers + 4 wiring listeners + 8 commands = 18
+    expect(context.subscriptions).toHaveLength(18);
+  });
+
+  it('asks for modal confirmation before resetToday and skips reset when the user dismisses', async () => {
+    const context = createContext();
+    activate(context);
+    const call = registerCommandMock.mock.calls.find((c) => c[0] === COMMAND_IDS.resetToday);
+    const handler = call?.[1] as (() => Promise<void>) | undefined;
+    showWarningMessageMock.mockResolvedValueOnce(undefined);
+    await handler?.();
+    expect(showWarningMessageMock).toHaveBeenCalledTimes(1);
+    const args = showWarningMessageMock.mock.calls[0] ?? [];
+    expect(args[1]).toEqual({ modal: true });
   });
 
   it('wires the eatCurrentMeat handler to a non-throwing service call instead of the M3 placeholder', () => {
