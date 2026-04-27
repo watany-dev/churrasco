@@ -100,7 +100,7 @@ describe('activate', () => {
     vi.clearAllMocks();
   });
 
-  it('registers every M3 command on activation', () => {
+  it('registers every M4 command on activation', () => {
     const context = createContext();
 
     activate(context);
@@ -119,15 +119,15 @@ describe('activate', () => {
     expect(registerCommandMock).toHaveBeenCalledTimes(6);
   });
 
-  it('pushes the session service, both UI controllers, and every command disposable into subscriptions', () => {
+  it('pushes the session service, every UI controller, and every command disposable into subscriptions', () => {
     const context = createContext();
 
     activate(context);
 
-    expect(context.subscriptions).toHaveLength(9);
+    expect(context.subscriptions).toHaveLength(10);
   });
 
-  it('eatCurrentMeat handler shows the M4 placeholder notification', () => {
+  it('wires the eatCurrentMeat handler to a non-throwing service call instead of the M3 placeholder', () => {
     const context = createContext();
 
     activate(context);
@@ -136,14 +136,11 @@ describe('activate', () => {
       (call) => call[0] === COMMAND_IDS.eatCurrentMeat,
     );
     const eatHandler = eatCall?.[1] as (() => void) | undefined;
-    eatHandler?.();
-
-    expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'Eat will be implemented in Milestone 4',
-    );
+    expect(() => eatHandler?.()).not.toThrow();
+    expect(showInformationMessageMock).not.toHaveBeenCalled();
   });
 
-  it('passCurrentMeat handler shows the M4 placeholder notification', () => {
+  it('wires the passCurrentMeat handler to a non-throwing service call instead of the M3 placeholder', () => {
     const context = createContext();
 
     activate(context);
@@ -152,11 +149,8 @@ describe('activate', () => {
       (call) => call[0] === COMMAND_IDS.passCurrentMeat,
     );
     const passHandler = passCall?.[1] as (() => void) | undefined;
-    passHandler?.();
-
-    expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'Pass will be implemented in Milestone 4',
-    );
+    expect(() => passHandler?.()).not.toThrow();
+    expect(showInformationMessageMock).not.toHaveBeenCalled();
   });
 });
 

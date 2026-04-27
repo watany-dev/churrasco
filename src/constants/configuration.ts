@@ -9,6 +9,7 @@ export const CONFIGURATION_KEYS = {
 
 export const DEFAULT_INTERVAL_MINUTES = 10;
 export const DEFAULT_MAX_SATIETY = 100;
+export const DEFAULT_ENABLE_NOTIFICATIONS = true;
 
 const MIN_MAX_SATIETY = 10;
 
