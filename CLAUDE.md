@@ -63,42 +63,43 @@ pnpm ci
 
 ## Architecture
 
-現状（Milestone 0 着手前）の `src/` は最小スタブのみ:
+現状（M0〜M4 完了）の `src/` 構成:
 
 ```
 src/
-  extension.ts               — activate / deactivate のスタブ
-```
-
-v0.1 の目標構成は以下。`docs/roadmap.md` の Milestone 1〜6 で順次追加していく:
-
-```
-src/
-  extension.ts                 — ワイヤリングのみ（DI ルート）
+  extension.ts                       — activate / deactivate、DI ルート
   constants/
-    meats.ts                   — 肉リスト定数
-    commands.ts                — コマンド ID 定数
-    configuration.ts           — 設定キー定数
+    meats.ts                         — DEFAULT_MEATS（12 種）
+    commands.ts                      — COMMAND_IDS
+    configuration.ts                 — CONFIGURATION_KEYS、sanitize* 関数
   domain/
-    meat.ts                    — Meat エンティティ型
-    session.ts                 — セッション状態型
-    log.ts                     — 今日のログ型
+    meat.ts                          — Meat / MeatCategory / MeatRarity 型
+    session.ts                       — ChurrascoSessionState、SessionStatus 型
+    log.ts                           — MeatLogEntry、MeatLogAction 型
   services/
-    ChurrascoSessionService.ts — セッション開始・停止・タイマー・肉到着
-    MeatDeckService.ts         — シャッフル・ドロー・デッキ補充
-    SatietyService.ts          — 満腹度計算
-    TodayLogService.ts         — 今日のログ集計
-  storage/
-    ChurrascoStateRepository.ts — ExtensionContext.globalState ラッパー
+    ChurrascoSessionService.ts       — セッション・タイマー・eat/pass/cooled
+    MeatDeckService.ts               — drawNext 関数（シャッフル・ドロー・補充）
   ui/
-    StatusBarController.ts     — ステータスバー表示・更新
-    NotificationController.ts  — 肉到着通知・ユーザー選択転送
-    QuickPickController.ts     — Quick Pick メニュー
-  views/
-    ChurrascoTreeDataProvider.ts — サイドバー Tree View
-    ChurrascoTreeItem.ts         — Tree View アイテム
+    formatStatusBar.ts               — 純関数: state → 表示文字列
+    StatusBarController.ts           — 1Hz countdown 描画
+    NotificationController.ts        — 肉到着通知・edge 検出
+    QuickPickController.ts           — 動的メニュー
   test/
-    *.test.ts                  — @vscode/test-cli 用統合テスト（Mocha 形式）
+    extension.test.ts                — @vscode/test-cli 統合テスト
+```
+
+M5〜M6 で追加予定の構成（`docs/roadmap.md` 参照）:
+
+```
+src/
+  services/
+    SatietyService.ts                — 満腹度計算（M5）
+    TodayLogService.ts               — 今日のログ集計（M5）
+  storage/
+    ChurrascoStateRepository.ts      — ExtensionContext.globalState ラッパー（M5）
+  views/
+    ChurrascoTreeDataProvider.ts     — サイドバー Tree View（M6）
+    ChurrascoTreeItem.ts             — Tree View アイテム（M6）
 ```
 
 ユニットテストは各実装ファイルと同じ階層に `*.test.ts` で置き、Vitest が `src/**/*.test.ts`（ただし `src/test/**` を除く）を拾う。`src/test/**` 配下は VS Code 拡張ホスト上で動かす統合テスト専用。
