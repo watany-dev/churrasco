@@ -136,8 +136,11 @@ churrasco-break/
     views/
       ChurrascoTreeDataProvider.ts
       ChurrascoTreeItem.ts
+      buildSidebarSections.ts
     test/
       extension.test.ts              — @vscode/test-cli, runs in an Extension Host
+  resources/
+    churrasco.svg                    — activity bar icon (SVG, 24x24, currentColor)
   package.json
   tsconfig.json
   esbuild.js
@@ -236,7 +239,18 @@ Independent from `NotificationController` (different edge, different responsibil
 
 ### `ChurrascoTreeDataProvider`
 
-- Render the service-status section.
-- Render today's meat log.
-- Render the meat collection.
-- Refresh on state changes.
+- Implements `TreeDataProvider<ChurrascoTreeItem>` and `Disposable`.
+- Renders three top-level sections — service status, today's meats, meat collection — by delegating layout to the pure `buildSidebarSections` function.
+- Subscribes to `ChurrascoSessionService.onStateChange` and `TodayLogService.onChange`; either event re-fires `onDidChangeTreeData(undefined)` to refresh the whole tree.
+- While the session status is `running`, ensures a 1Hz refresh interval to keep the countdown leaf in sync; clears the interval when the status leaves `running`.
+- Disposes the interval, subscriptions, and emitter on `dispose()`.
+
+See [ADR-0010](../adr/0010-sidebar-tree-view-design.md).
+
+### `buildSidebarSections`
+
+Pure function (`vscode`-independent) that converts the session state, today log, lifetime aggregates, satiety, and meat catalog into a `SidebarNode[]` tree. The provider maps each node to a `ChurrascoTreeItem`. Vitest covers status / today / collection rendering, including unknown-`meatId` fallback.
+
+### `ChurrascoTreeItem`
+
+`vscode.TreeItem` subclass that wraps a `SidebarNode`. Sections are constructed with `Expanded` collapsible state; leaves with `None`. Section nodes carry their `children: SidebarNode[]` so the provider can resolve `getChildren(parent)` without re-running `buildSidebarSections`.

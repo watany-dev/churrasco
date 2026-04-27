@@ -4,7 +4,7 @@ This document captures the **v0.1 final-form** `package.json` blueprint — the 
 
 The toolchain is pinned via `packageManager: "pnpm@<version>"` (activated by Corepack), `engines.node: ">=24"`, and `engines.vscode: "^1.90.0"`. All scripts assume `pnpm`. Quality and tests are run via Biome / Vitest / `@vscode/test-cli` rather than ESLint / Prettier / Mocha-as-unit-runner.
 
-> **Note:** `contributes.commands` and `contributes.views` are added incrementally per milestone — see the [Roadmap](roadmap.md). Today the live `package.json` declares every command listed below (M0–M5: `startSession`, `stopSession`, `pauseSession`, `openMenu`, `eatCurrentMeat`, `passCurrentMeat`, `showTodayLog`, `resetToday`); `viewsContainers` / `views` land with M6.
+> **Note:** the live `package.json` now declares every command listed below (M0–M5: `startSession`, `stopSession`, `pauseSession`, `openMenu`, `eatCurrentMeat`, `passCurrentMeat`, `showTodayLog`, `resetToday`) plus the `viewsContainers` / `views` contributions for the M6 sidebar.
 
 ```json
 {

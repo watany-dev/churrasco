@@ -29,6 +29,7 @@ import { NotificationController } from './ui/NotificationController';
 import { QuickPickController } from './ui/QuickPickController';
 import { StatusBarController } from './ui/StatusBarController';
 import { formatTodayLog } from './ui/formatTodayLog';
+import { ChurrascoTreeDataProvider } from './views/ChurrascoTreeDataProvider';
 
 const RESET_CONFIRM: MessageItem = { title: 'Reset' };
 
@@ -104,6 +105,17 @@ export function activate(context: ExtensionContext): void {
           .get<number>(CONFIGURATION_KEYS.maxSatiety, DEFAULT_MAX_SATIETY),
       ),
   });
+  const treeProvider = new ChurrascoTreeDataProvider({
+    service: session,
+    todayLog,
+    meats: DEFAULT_MEATS,
+    getMaxSatiety: () =>
+      sanitizeMaxSatiety(
+        workspace
+          .getConfiguration(CONFIGURATION_SECTION)
+          .get<number>(CONFIGURATION_KEYS.maxSatiety, DEFAULT_MAX_SATIETY),
+      ),
+  });
 
   const wiring: Disposable[] = [];
   wiring.push(session.onMeatLogged((entry) => todayLog.recordEntry(entry)));
@@ -137,6 +149,8 @@ export function activate(context: ExtensionContext): void {
     quickPick,
     notifications,
     summary,
+    treeProvider,
+    window.registerTreeDataProvider('churrasco.statusView', treeProvider),
     ...wiring,
     commands.registerCommand(COMMAND_IDS.startSession, () => session.start()),
     commands.registerCommand(COMMAND_IDS.stopSession, () => session.stop()),

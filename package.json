@@ -53,6 +53,23 @@
         "title": "Churrasco: Reset Today's Log"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "churrasco-break",
+          "title": "Churrasco",
+          "icon": "resources/churrasco.svg"
+        }
+      ]
+    },
+    "views": {
+      "churrasco-break": [
+        {
+          "id": "churrasco.statusView",
+          "name": "Churrasco Break"
+        }
+      ]
+    },
     "configuration": {
       "title": "Churrasco Break",
       "properties": {
