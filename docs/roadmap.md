@@ -10,7 +10,7 @@
 | M1 — Meat data and draw | ✅ Done |
 | M2 — Session and timer | ✅ Done |
 | M3 — Status bar and Quick Pick | ✅ Done |
-| M4 — Notifications and meat actions | ⏳ Planned |
+| M4 — Notifications and meat actions | ✅ Done |
 | M5 — Log, satiety, persistence | ⏳ Planned |
 | M6 — Simple sidebar | ⏳ Planned |
 | M7 — Tests and packaging | ⏳ Planned |
