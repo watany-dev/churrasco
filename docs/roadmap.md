@@ -13,7 +13,7 @@
 | M4 — Notifications and meat actions | ✅ Done |
 | M5 — Log, satiety, persistence | ✅ Done |
 | M6 — Simple sidebar | ✅ Done |
-| M7 — Tests and packaging | ⏳ Planned |
+| M7 — Tests and packaging | ✅ Done |
 
 ### Milestone 0 — Project bootstrap
 
@@ -231,6 +231,16 @@ Done when:
 - `pnpm package` produces a VSIX.
 - The CI `ci` workflow is green on `main`.
 - The VSIX installs and runs in another VS Code environment.
+
+## v0.1.0 release
+
+Released on 2026-04-27 as a local VSIX. Build it with:
+
+```bash
+pnpm package
+```
+
+The CI `package` job also uploads `churrasco-break-0.1.0.vsix` as a build artifact on pull requests and pushes to `main`. Marketplace publication is intentionally deferred to v0.2+. See [`CHANGELOG.md`](../CHANGELOG.md) for the full per-milestone summary.
 
 ## v0.2 and beyond candidates
 

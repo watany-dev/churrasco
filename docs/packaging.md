@@ -13,6 +13,9 @@ The toolchain is pinned via `packageManager: "pnpm@<version>"` (activated by Cor
   "description": "A VS Code extension that delivers a different cut of churrasco to your editor every 10 minutes.",
   "version": "0.1.0",
   "publisher": "your-publisher-name",
+  "bugs": { "url": "https://github.com/<owner>/<repo>/issues" },
+  "homepage": "https://github.com/<owner>/<repo>#readme",
+  "keywords": ["pomodoro", "timer", "break", "churrasco", "rhythm"],
   "engines": {
     "vscode": "^1.90.0",
     "node": ">=24"
@@ -106,8 +109,48 @@ The toolchain is pinned via `packageManager: "pnpm@<version>"` (activated by Cor
     "test:unit":    "vitest run",
     "test:vscode":  "vscode-test",
     "test":         "pnpm test:unit && pnpm test:vscode",
-    "package":      "pnpm check-types && node esbuild.js --production && vsce package --no-dependencies",
-    "vscode:prepublish": "pnpm package"
+    "package":      "vsce package --no-dependencies",
+    "vscode:prepublish": "pnpm check-types && node esbuild.js --production"
   }
 }
 ```
+
+## .vscodeignore
+
+`vsce package` honors a top-level `.vscodeignore`. The v0.1 policy is to ship only the production runtime — `dist/extension.js`, `package.json`, `README.md`, `CHANGELOG.md`, `LICENSE`, and `resources/`. Everything else (TypeScript sources, tests, configs, CI workflows, lockfiles, ADRs) is excluded so the VSIX stays small and free of repo metadata.
+
+```text
+.vscode/**
+.vscode-test/**
+.vscode-test.mjs
+.github/**
+.husky/**
+src/**
+out/**
+coverage/**
+docs/**
+
+**/*.test.ts
+**/*.map
+**/*.tsbuildinfo
+**/tsconfig*.json
+vitest.config.ts
+vitest.workspace.ts
+esbuild.js
+knip.config.ts
+biome.json
+lefthook.yml
+commitlint.config.*
+
+pnpm-lock.yaml
+pnpm-workspace.yaml
+.npmrc
+.nvmrc
+.gitignore
+.gitattributes
+.editorconfig
+```
+
+## Marketplace icon
+
+A top-level `"icon"` is intentionally omitted in v0.1: the VS Code Marketplace requires a PNG of at least 128×128, and `resources/churrasco.svg` is currently used only for the activity bar container (`viewsContainers.activitybar[].icon`, which does accept SVG). Adding a Marketplace-grade PNG icon is tracked alongside Marketplace publication in v0.2+.

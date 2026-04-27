@@ -6,7 +6,7 @@ When a meat arrives you can **Eat**, **Pass**, or **End for the day**. Every mea
 
 ## Status
 
-Active v0.1 development. The full v0.1 scope is tracked across [Roadmap](docs/roadmap.md) milestones M0–M7. Currently shipped: session service with a non-repeating meat draw, status bar countdown, Quick Pick menu, arrival notifications wired to Eat / Pass / End-for-the-day handlers, and the `cooled` flow that auto-records meats that go untouched before the next arrival (M0–M4). M5 adds today's log, satiety, the lifetime meat collection, persistence via `ExtensionContext.globalState`, an end-of-session summary, and `autoStopWhenFull` behavior. M6 ships the simple sidebar Tree View (service status / today's meats / meat collection) on a dedicated activity bar container. M7 (tests and packaging) is the remaining milestone.
+v0.1 milestones M0–M7 are complete. Currently shipped: session service with a non-repeating meat draw, status bar countdown, Quick Pick menu, arrival notifications wired to Eat / Pass / End-for-the-day handlers, and the `cooled` flow that auto-records meats that go untouched before the next arrival (M0–M4). M5 adds today's log, satiety, the lifetime meat collection, persistence via `ExtensionContext.globalState`, an end-of-session summary, and `autoStopWhenFull` behavior. M6 ships the simple sidebar Tree View (service status / today's meats / meat collection) on a dedicated activity bar container. M7 finalizes tests and packaging — v0.1.0 is distributed as a local VSIX produced by `pnpm package` (Marketplace publication remains a v0.2+ candidate).
 
 ## Features (v0.1 target)
 
@@ -70,6 +70,18 @@ Each task must finish with `pnpm ci` green before committing. The CI workflow (`
 
 Press F5 in VS Code to launch an Extension Development Host with the bundled extension loaded.
 
+## Install from VSIX
+
+Local distribution is the supported path for v0.1.
+
+```bash
+pnpm install
+pnpm package                                          # produces churrasco-break-0.1.0.vsix
+code --install-extension churrasco-break-0.1.0.vsix
+```
+
+The CI `package` job also uploads `churrasco-break-0.1.0.vsix` as a build artifact on every push to `main` and on pull requests, so the same file can be downloaded from the GitHub Actions run instead of building locally.
+
 ## Documentation
 
 The full specification, architecture, and roadmap live in [`docs/`](docs/README.md):
@@ -82,4 +94,5 @@ The full specification, architecture, and roadmap live in [`docs/`](docs/README.
 - [Acceptance Criteria](docs/spec/acceptance.md) — definition of done for v0.1
 - [Roadmap](docs/roadmap.md) — v0.1 milestones and v0.2+ candidates
 - [Packaging](docs/packaging.md) — `package.json` blueprint
+- [Changelog](CHANGELOG.md) — released versions and notable changes
 - [ADRs](docs/adr/) — architecture decision records
