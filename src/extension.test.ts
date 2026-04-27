@@ -3,6 +3,7 @@ import type { Disposable, ExtensionContext, Memento } from 'vscode';
 
 const {
   registerCommandMock,
+  registerTreeDataProviderMock,
   getConfigurationMock,
   createStatusBarItemMock,
   onDidChangeConfigurationMock,
@@ -11,6 +12,7 @@ const {
   showQuickPickMock,
 } = vi.hoisted(() => ({
   registerCommandMock: vi.fn(),
+  registerTreeDataProviderMock: vi.fn(),
   getConfigurationMock: vi.fn(),
   createStatusBarItemMock: vi.fn(),
   onDidChangeConfigurationMock: vi.fn(),
@@ -39,8 +41,19 @@ vi.mock('vscode', () => {
       this.listeners.clear();
     }
   }
+  class FakeTreeItem {
+    label: string;
+    description: string | undefined;
+    collapsibleState: number;
+    constructor(label: string, collapsibleState: number) {
+      this.label = label;
+      this.collapsibleState = collapsibleState;
+    }
+  }
   return {
     EventEmitter: FakeEventEmitter,
+    TreeItem: FakeTreeItem,
+    TreeItemCollapsibleState: { None: 0, Collapsed: 1, Expanded: 2 },
     StatusBarAlignment: { Left: 1, Right: 2 },
     commands: {
       registerCommand: registerCommandMock,
@@ -54,6 +67,7 @@ vi.mock('vscode', () => {
       showInformationMessage: showInformationMessageMock,
       showWarningMessage: showWarningMessageMock,
       showQuickPick: showQuickPickMock,
+      registerTreeDataProvider: registerTreeDataProviderMock,
     },
   };
 });
@@ -121,6 +135,8 @@ describe('activate', () => {
     showInformationMessageMock.mockReset();
     showWarningMessageMock.mockReset();
     showQuickPickMock.mockReset();
+    registerTreeDataProviderMock.mockReset();
+    registerTreeDataProviderMock.mockReturnValue({ dispose: vi.fn() });
   });
 
   afterEach(() => {
@@ -163,8 +179,8 @@ describe('activate', () => {
   it('pushes services, controllers, wiring, and command disposables into subscriptions', () => {
     const context = createContext();
     activate(context);
-    // 6 services/controllers + 4 wiring listeners + 8 commands = 18
-    expect(context.subscriptions).toHaveLength(18);
+    // 7 services/controllers + 1 tree-view registration + 4 wiring listeners + 8 commands = 20
+    expect(context.subscriptions).toHaveLength(20);
   });
 
   it('asks for modal confirmation before resetToday and skips reset when the user dismisses', async () => {
