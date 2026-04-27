@@ -16,8 +16,32 @@ suite('Extension activation', () => {
       'churrasco.openMenu',
       'churrasco.eatCurrentMeat',
       'churrasco.passCurrentMeat',
+      'churrasco.showTodayLog',
+      'churrasco.resetToday',
     ]) {
       assert.ok(allCommands.includes(id), `${id} is not registered`);
+    }
+  });
+
+  test('contributes all churrasco configuration keys with defaults', () => {
+    const config = vscode.workspace.getConfiguration('churrasco');
+    const expected: Array<{ key: string; defaultValue: unknown }> = [
+      { key: 'intervalMinutes', defaultValue: 10 },
+      { key: 'enableNotifications', defaultValue: true },
+      { key: 'showStatusBar', defaultValue: true },
+      { key: 'pauseWhenInactive', defaultValue: false },
+      { key: 'maxSatiety', defaultValue: 100 },
+      { key: 'autoStopWhenFull', defaultValue: true },
+      { key: 'locale', defaultValue: 'ja' },
+    ];
+    for (const { key, defaultValue } of expected) {
+      const inspected = config.inspect(key);
+      assert.ok(inspected, `churrasco.${key} is not contributed`);
+      assert.strictEqual(
+        inspected.defaultValue,
+        defaultValue,
+        `churrasco.${key} default should be ${String(defaultValue)}`,
+      );
     }
   });
 
