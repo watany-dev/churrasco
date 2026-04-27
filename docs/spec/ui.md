@@ -28,6 +28,12 @@ Stopped:
 🥩 Churrasco: stopped
 ```
 
+Paused:
+
+```text
+⏸ Churrasco: paused
+```
+
 Display rules:
 
 - Show only one piece of information at a time.
@@ -91,6 +97,11 @@ Display rules:
 - Items are filtered by session state.
 - If there is no current meat, **Eat** and **Pass** are hidden.
 - Today's meat log is always available.
+
+> Milestone note: M3 ships every item except `📋 Show today's meat log`,
+> which lands together with the M5 `churrasco.showTodayLog` command and
+> the `TodayLogService`. Eat / Pass are wired to stub commands in M3 and
+> get their real handlers in M4 ([ADR-0004 §2](../adr/0004-statusbar-and-quickpick-design.md)).
 
 ## Sidebar Tree View
 

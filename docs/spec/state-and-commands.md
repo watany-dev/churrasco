@@ -134,7 +134,7 @@ Interval between meat arrivals, in minutes. Default `10`. During development and
 
 The value is sanitized at the extension boundary by `sanitizeInterval` in `src/constants/configuration.ts`: any non-finite, zero, negative, or non-numeric value (e.g. user edits in `settings.json` that bypass the JSON schema) falls back to `DEFAULT_INTERVAL_MINUTES` (`10`). The session service itself assumes a positive finite number and carries no defensive guard ([ADR-0003 §7](../adr/0003-session-and-timer-design.md)).
 
-The setting is read as a snapshot on each `startSession`. Reactivity to `workspace.onDidChangeConfiguration` is deferred to M3 when the status-bar countdown lands.
+The setting is read as a snapshot on each `startSession`. Reactivity to `workspace.onDidChangeConfiguration` for `intervalMinutes` is deferred to M4+ ([ADR-0004 §3](../adr/0004-statusbar-and-quickpick-design.md)) because mid-session interval changes require deciding how to recompute `nextArrivalAt`. M3 only wires reactivity for `churrasco.showStatusBar`.
 
 ### `churrasco.enableNotifications`
 

@@ -1,9 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Disposable, ExtensionContext } from 'vscode';
 
-const { registerCommandMock, getConfigurationMock } = vi.hoisted(() => ({
+const {
+  registerCommandMock,
+  getConfigurationMock,
+  createStatusBarItemMock,
+  onDidChangeConfigurationMock,
+  showInformationMessageMock,
+  showQuickPickMock,
+} = vi.hoisted(() => ({
   registerCommandMock: vi.fn(),
   getConfigurationMock: vi.fn(),
+  createStatusBarItemMock: vi.fn(),
+  onDidChangeConfigurationMock: vi.fn(),
+  showInformationMessageMock: vi.fn(),
+  showQuickPickMock: vi.fn(),
 }));
 
 vi.mock('vscode', () => {
@@ -27,13 +38,20 @@ vi.mock('vscode', () => {
     }
   }
   return {
+    EventEmitter: FakeEventEmitter,
+    StatusBarAlignment: { Left: 1, Right: 2 },
     commands: {
       registerCommand: registerCommandMock,
     },
     workspace: {
       getConfiguration: getConfigurationMock,
+      onDidChangeConfiguration: onDidChangeConfigurationMock,
     },
-    EventEmitter: FakeEventEmitter,
+    window: {
+      createStatusBarItem: createStatusBarItemMock,
+      showInformationMessage: showInformationMessageMock,
+      showQuickPick: showQuickPickMock,
+    },
   };
 });
 
@@ -44,43 +62,101 @@ function createContext(): ExtensionContext {
   return { subscriptions: [] as Disposable[] } as unknown as ExtensionContext;
 }
 
+function createFakeStatusBarItem(): {
+  text: string;
+  tooltip: string | undefined;
+  command: string | undefined;
+  show: ReturnType<typeof vi.fn>;
+  hide: ReturnType<typeof vi.fn>;
+  dispose: ReturnType<typeof vi.fn>;
+} {
+  return {
+    text: '',
+    tooltip: undefined,
+    command: undefined,
+    show: vi.fn(),
+    hide: vi.fn(),
+    dispose: vi.fn(),
+  };
+}
+
 describe('activate', () => {
   beforeEach(() => {
     registerCommandMock.mockReset();
     registerCommandMock.mockReturnValue({ dispose: vi.fn() });
     getConfigurationMock.mockReset();
     getConfigurationMock.mockReturnValue({
-      get: vi.fn().mockReturnValue(10),
+      get: vi.fn((_key: string, fallback: unknown) => fallback),
     });
+    createStatusBarItemMock.mockReset();
+    createStatusBarItemMock.mockReturnValue(createFakeStatusBarItem());
+    onDidChangeConfigurationMock.mockReset();
+    onDidChangeConfigurationMock.mockReturnValue({ dispose: vi.fn() });
+    showInformationMessageMock.mockReset();
+    showQuickPickMock.mockReset();
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('registers startSession, stopSession, and pauseSession on activation', () => {
+  it('registers every M3 command on activation', () => {
     const context = createContext();
 
     activate(context);
 
-    expect(registerCommandMock).toHaveBeenCalledTimes(3);
-    expect(registerCommandMock).toHaveBeenCalledWith(
-      COMMAND_IDS.startSession,
-      expect.any(Function),
+    const registeredIds = registerCommandMock.mock.calls.map((call) => call[0]);
+    expect(registeredIds).toEqual(
+      expect.arrayContaining([
+        COMMAND_IDS.startSession,
+        COMMAND_IDS.stopSession,
+        COMMAND_IDS.pauseSession,
+        COMMAND_IDS.openMenu,
+        COMMAND_IDS.eatCurrentMeat,
+        COMMAND_IDS.passCurrentMeat,
+      ]),
     );
-    expect(registerCommandMock).toHaveBeenCalledWith(COMMAND_IDS.stopSession, expect.any(Function));
-    expect(registerCommandMock).toHaveBeenCalledWith(
-      COMMAND_IDS.pauseSession,
-      expect.any(Function),
+    expect(registerCommandMock).toHaveBeenCalledTimes(6);
+  });
+
+  it('pushes the session service, both UI controllers, and every command disposable into subscriptions', () => {
+    const context = createContext();
+
+    activate(context);
+
+    expect(context.subscriptions).toHaveLength(9);
+  });
+
+  it('eatCurrentMeat handler shows the M4 placeholder notification', () => {
+    const context = createContext();
+
+    activate(context);
+
+    const eatCall = registerCommandMock.mock.calls.find(
+      (call) => call[0] === COMMAND_IDS.eatCurrentMeat,
+    );
+    const eatHandler = eatCall?.[1] as (() => void) | undefined;
+    eatHandler?.();
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'Eat will be implemented in Milestone 4',
     );
   });
 
-  it('pushes the session service plus the three command disposables into subscriptions', () => {
+  it('passCurrentMeat handler shows the M4 placeholder notification', () => {
     const context = createContext();
 
     activate(context);
 
-    expect(context.subscriptions).toHaveLength(4);
+    const passCall = registerCommandMock.mock.calls.find(
+      (call) => call[0] === COMMAND_IDS.passCurrentMeat,
+    );
+    const passHandler = passCall?.[1] as (() => void) | undefined;
+    passHandler?.();
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'Pass will be implemented in Milestone 4',
+    );
   });
 });
 
