@@ -3,7 +3,7 @@ import type { Meat } from '../domain/meat';
 export const DEFAULT_MEATS: Meat[] = [
   {
     id: 'picanha',
-    nameJa: 'ピッカーニャ',
+    nameJa: 'ピッカーニャ（イチボ）',
     nameEn: 'Picanha',
     category: 'beef',
     rarity: 'common',
@@ -13,7 +13,7 @@ export const DEFAULT_MEATS: Meat[] = [
   },
   {
     id: 'alcatra',
-    nameJa: 'アウカトラ',
+    nameJa: 'アルカトラ（ランプ）',
     nameEn: 'Alcatra',
     category: 'beef',
     rarity: 'common',
@@ -23,7 +23,7 @@ export const DEFAULT_MEATS: Meat[] = [
   },
   {
     id: 'fraldinha',
-    nameJa: 'フラウジーニャ',
+    nameJa: 'フラウジーニャ（カイノミ）',
     nameEn: 'Fraldinha',
     category: 'beef',
     rarity: 'common',
@@ -33,7 +33,7 @@ export const DEFAULT_MEATS: Meat[] = [
   },
   {
     id: 'costela',
-    nameJa: 'コステーラ',
+    nameJa: 'コステーラ（骨付きバラ）',
     nameEn: 'Costela',
     category: 'beef',
     rarity: 'uncommon',
@@ -43,7 +43,7 @@ export const DEFAULT_MEATS: Meat[] = [
   },
   {
     id: 'cupim',
-    nameJa: 'クッピン',
+    nameJa: 'クッピン（こぶ肉）',
     nameEn: 'Cupim',
     category: 'beef',
     rarity: 'uncommon',
@@ -53,7 +53,7 @@ export const DEFAULT_MEATS: Meat[] = [
   },
   {
     id: 'linguica',
-    nameJa: 'リングイッサ',
+    nameJa: 'リングイッサ（ブラジル風ソーセージ）',
     nameEn: 'Linguica',
     category: 'pork',
     rarity: 'common',
@@ -63,7 +63,7 @@ export const DEFAULT_MEATS: Meat[] = [
   },
   {
     id: 'coracao',
-    nameJa: 'コラソン',
+    nameJa: 'コラソン（鶏ハツ）',
     nameEn: 'Coracao',
     category: 'chicken',
     rarity: 'uncommon',
@@ -73,7 +73,7 @@ export const DEFAULT_MEATS: Meat[] = [
   },
   {
     id: 'frango',
-    nameJa: 'フランゴ',
+    nameJa: 'フランゴ（鶏もも肉）',
     nameEn: 'Frango',
     category: 'chicken',
     rarity: 'common',
@@ -83,7 +83,7 @@ export const DEFAULT_MEATS: Meat[] = [
   },
   {
     id: 'porco',
-    nameJa: 'ポルコ',
+    nameJa: 'ポルコ（豚肩ロース）',
     nameEn: 'Porco',
     category: 'pork',
     rarity: 'common',
@@ -93,7 +93,7 @@ export const DEFAULT_MEATS: Meat[] = [
   },
   {
     id: 'cordeiro',
-    nameJa: 'ラム',
+    nameJa: 'カルネイロ（ラム）',
     nameEn: 'Lamb',
     category: 'lamb',
     rarity: 'uncommon',
@@ -103,7 +103,7 @@ export const DEFAULT_MEATS: Meat[] = [
   },
   {
     id: 'queijo',
-    nameJa: '焼きチーズ',
+    nameJa: 'ケイジョ（焼きチーズ）',
     nameEn: 'Grilled Cheese',
     category: 'side',
     rarity: 'rare',
@@ -113,7 +113,7 @@ export const DEFAULT_MEATS: Meat[] = [
   },
   {
     id: 'abacaxi',
-    nameJa: '焼きパイナップル',
+    nameJa: 'アバカシ（焼きパイナップル）',
     nameEn: 'Grilled Pineapple',
     category: 'side',
     rarity: 'rare',
